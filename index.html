@@ -1,79 +1,33 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoLiA</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        
-        .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
-        .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; background-repeat: no-repeat; }
-        
-        .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        
-        .content { padding: 20px; }
-        .info-box { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; color: #555; }
-        
-        /* Colori dinamici per stato */
-        .stato-aperto { color: #28a745; font-weight: bold; }
-        .stato-chiuso { color: #dc3545; font-weight: bold; }
-        
-        .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
-        
-        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div id="cover" class="cover"></div>
-    <div class="logo-container"><img id="logo" src="" alt="Logo"></div>
-    
-    <div class="content">
-        <h1 id="nome">Caricamento...</h1>
-        <p id="descrizione"></p>
-        
-        <div class="info-box">
-            <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
-            <p><strong>🕒 Orario:</strong> <span id="orario">...</span></p>
-            <p><strong>Stato:</strong> <span id="stato-testo">...</span></p>
-        </div>
-
-        <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
-    </div>
-</div>
-
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHTxtS_AbpfeQsz4bJxykjn9YyEF487RcghXKIBjZUu4J5CmSntmr-S-yYjo-cZxr6/exec";
+    // USA L'URL DELLA TUA WEB APP AGGIORNATA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywnKXnws0b7VGw6D-HNRzNov9wQUt4EAO0xAZUlVlqt4apAE8ojHYhPn5nOxnKwzWe/exec";
     
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
+            console.log(data); // Ti aiuta a vedere i dati in F12 -> Console
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = "url('" + data.copertina + "')";
             document.getElementById('logo').src = data.logo;
             
-            // Dati nuovi
-            document.getElementById('indirizzo').innerText = data.indirizzo || "N/A";
+            // Indirizzo
+            document.getElementById('indirizzo').innerText = data.indirizzo;
+            
+            // Orario: ho unito apertura e chiusura come nel tuo JSON
             document.getElementById('orario').innerText = `${data.giorni} | ${data.apertura} - ${data.chiusura}`;
             
-            // Gestione colore stato
+            // Stato: visto che nel JSON hai "18:30", se vuoi il colore, 
+            // confrontiamo il valore. Se vuoi mantenere il colore verde/rosso:
             const statoSpan = document.getElementById('stato-testo');
-            statoSpan.innerText = data.stato;
-            if(data.stato.toLowerCase() === 'aperto') {
-                statoSpan.className = 'stato-aperto';
-            } else {
-                statoSpan.className = 'stato-chiuso';
-            }
+            statoSpan.innerText = data.stato; // Qui stamperà 18:30
+            
+            // Se vuoi logica per il colore, adattala in base a cosa scrivi nel foglio
+            statoSpan.className = 'stato-aperto'; 
+        })
+        .catch(err => {
+            console.error("Errore caricamento:", err);
+            document.getElementById('nome').innerText = "Errore di caricamento dati";
         });
-        
-    // ... (restanti funzioni toggleCart, apriModulo, ecc.)
 </script>
-</body>
-</html>
