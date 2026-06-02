@@ -1,91 +1,58 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Negozio</title>
-    <script id="jsonld-container" type="application/ld+json"></script>
-    <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; }
-        .card { background: white; max-width: 400px; margin: 20px auto; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .cover { height: 150px; background-size: cover; background-position: center; }
-        .logo { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; margin: -40px 0 0 20px; }
-        .content { padding: 50px 20px 20px; }
-        .btn { display: block; background: #007bff; color: white; padding: 15px; text-align: center; text-decoration: none; margin: 10px 0; border-radius: 5px; cursor: pointer; border: none; width: 100%; font-size: 16px; }
-        
-        /* Stile Pop-up */
-        #popup { display: none; position: fixed; bottom: 0; width: 100%; max-width: 400px; background: white; padding: 20px; border-radius: 20px 20px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; z-index: 1000; }
-    </style>
-</head>
-<body>
+<div id="popup" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:white; padding:20px; border-radius:20px 20px 0 0; box-shadow:0 -5px 15px rgba(0,0,0,0.2); box-sizing:border-box; z-index:1000;">
+    
+    <div id="menu-scelta">
+        <h3 style="margin-top:0; text-align:center;">Contatta il Negozio</h3>
+        <button class="btn" onclick="apriModulo('wa')">💬 Invia WhatsApp</button>
+        <button class="btn" onclick="apriModulo('email')">📧 Invia Email</button>
+        <button class="btn" style="background:#555" onclick="closePopup()">Annulla</button>
+    </div>
 
-<div class="card">
-    <div id="cover" class="cover"></div>
-    <img id="logo" class="logo" src="" alt="Logo">
-    <div class="content">
-        <h1 id="nome">Caricamento...</h1>
-        <p id="descrizione"></p>
-        <p><strong>Categoria:</strong> <span id="categoria"></span></p>
-        <p><strong>Indirizzo:</strong> <span id="indirizzo"></span></p>
-        <a id="btn-mappa" class="btn" href="#">Apri su Mappe</a>
-        <button class="btn" onclick="showPopup()">Contatta Ora</button>
+    <div id="modulo-contatto" style="display:none;">
+        <h3 id="titolo-modulo" style="text-align:center;"></h3>
+        <input type="text" id="nome" placeholder="Il tuo Nome" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box;">
+        <input type="text" id="telefono" placeholder="Il tuo Telefono" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box;">
+        <textarea id="messaggio" placeholder="Scrivi il tuo messaggio..." style="width:100%; padding:10px; margin:5px 0; height:80px; box-sizing:border-box;"></textarea>
+        <button class="btn" style="background:#28a745" onclick="inviaMessaggio()">Invia Ora</button>
+        <button class="btn" style="background:#dc3545" onclick="resetModulo()">Indietro</button>
     </div>
 </div>
 
-<div id="popup">
-    <h3 style="margin-top:0">Contatta il negozio</h3>
-    <button class="btn" style="background:#25D366" onclick="contatta('wa')">WhatsApp</button>
-    <button class="btn" style="background:#ea4335" onclick="contatta('email')">Email</button>
-    <button class="btn" style="background:#343a40" onclick="contatta('tel')">Telefono</button>
-    <button class="btn" style="background:#ccc" onclick="closePopup()">Chiudi</button>
-</div>
-
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const idNegozio = urlParams.get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
-    let negozioData = {};
+    let tipoAttivo = '';
 
-    // Caricamento dati
-    fetch(`${SCRIPT_URL}?id=${idNegozio}`)
-        .then(res => res.json())
-        .then(data => {
-            negozioData = data;
-            document.getElementById('nome').innerText = data.nome;
-            document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-            document.getElementById('logo').src = data.logo;
-            document.getElementById('categoria').innerText = data.categoria;
-            document.getElementById('descrizione').innerText = data.descrizione;
-            document.getElementById('indirizzo').innerText = data.indirizzo;
-            document.getElementById('btn-mappa').href = data.linkMappa;
-            document.getElementById('jsonld-container').textContent = data.jsonLd;
-        });
+    function apriModulo(tipo) {
+        tipoAttivo = tipo;
+        document.getElementById('menu-scelta').style.display = 'none';
+        document.getElementById('modulo-contatto').style.display = 'block';
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia WhatsApp' : 'Invia Email';
+    }
 
-    function showPopup() { document.getElementById('popup').style.display = 'block'; }
-    function closePopup() { document.getElementById('popup').style.display = 'none'; }
+    function resetModulo() {
+        document.getElementById('menu-scelta').style.display = 'block';
+        document.getElementById('modulo-contatto').style.display = 'none';
+    }
 
-    function contatta(tipo) {
-        // Verifica limiti
+    function inviaMessaggio() {
+        // Verifica limite click
         if (parseInt(negozioData.click) >= parseInt(negozioData.limite)) {
-            alert("Limite raggiunto. Per passare al piano premium contatta il 41764458866");
+            alert("Limite raggiunto. Contatta il 41764458866");
             return;
         }
 
-        // Incremento Click via POST
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: idNegozio, action: 'click' })
-        });
+        const nome = document.getElementById('nome').value;
+        const msg = document.getElementById('messaggio').value;
+        const tel = document.getElementById('telefono').value;
 
-        // Azione contatto
-        if (tipo === 'wa') window.open(`https://wa.me/${negozioData.whatsapp}`);
-        if (tipo === 'email') window.location.href = `mailto:${negozioData.email}`;
-        if (tipo === 'tel') window.location.href = `tel:${negozioData.telefono}`;
-        
+        // Logica invio
+        if (tipoAttivo === 'wa') {
+            const waLink = `https://wa.me/${negozioData.whatsapp}?text=Ciao, sono ${nome}. Tel: ${tel}. Messaggio: ${msg}`;
+            window.open(waLink, '_blank');
+        } else {
+            window.location.href = `mailto:${negozioData.email}?subject=Messaggio da ${nome}&body=${msg}%0A%0AContatto: ${tel}`;
+        }
+
+        // Incremento contatore (chiamata POST)
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ id: idNegozio, action: 'click' }) });
         closePopup();
     }
 </script>
-</body>
-</html>
