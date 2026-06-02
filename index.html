@@ -6,18 +6,16 @@
     <title>GeoLiA</title>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        
         .card { background: white; width: 100%; margin: 0; }
-        
-        /* Gestione Altezza Foto */
         .cover { width: 100%; height: 300px; background-size: cover; background-position: center; }
-        
-        /* Su PC aumentiamo l'altezza della foto */
-        @media (min-width: 768px) {
-            .cover { height: 60vh; }
-        }
+        @media (min-width: 768px) { .cover { height: 60vh; } }
         
         .content { padding: 20px; }
+        .info-box { margin-bottom: 15px; }
+        .logo-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+        .categoria { color: #666; font-size: 14px; text-transform: uppercase; }
+        .stato-orario { font-weight: bold; padding: 5px 10px; border-radius: 5px; display: inline-block; font-size: 14px; }
+        
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         
         #cart-panel { 
@@ -26,11 +24,9 @@
             box-shadow: 0 -10px 30px rgba(0,0,0,0.15); 
             z-index: 1000; padding: 25px; box-sizing: border-box; display: none; 
         }
-
         @media (min-width: 768px) {
             #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; }
         }
-
         .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
     </style>
@@ -40,9 +36,13 @@
 <div class="card">
     <div id="cover" class="cover"></div>
     <div class="content">
-        <h1 id="nome">Caricamento...</h1>
+        <img id="logo" class="logo-img" src="" style="display:none;">
+        <div id="categoria" class="categoria"></div>
+        <h1 id="nome" style="margin: 5px 0;">Caricamento...</h1>
+        <div id="indirizzo" class="info-box"></div>
+        <div id="stato-orario" class="stato-orario"></div>
         <p id="descrizione"></p>
-        <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+        <button class="btn" style="background:#007bff; margin-top:20px;" onclick="toggleCart()">Contatta il Negozio</button>
     </div>
 </div>
 
@@ -78,6 +78,20 @@
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
+            
+            // Popolamento Nuovi Dati
+            if(data.logo) {
+                const logo = document.getElementById('logo');
+                logo.src = data.logo;
+                logo.style.display = 'block';
+            }
+            document.getElementById('categoria').innerText = data.categoria;
+            document.getElementById('indirizzo').innerText = data.indirizzo;
+            
+            const statoOrario = document.getElementById('stato-orario');
+            statoOrario.innerText = data.stato;
+            statoOrario.style.backgroundColor = (data.stato === 'Aperto') ? '#d4edda' : '#f8d7da';
+            statoOrario.style.color = (data.stato === 'Aperto') ? '#155724' : '#721c24';
         });
 
     function toggleCart() {
