@@ -35,6 +35,7 @@
         <div class="info-box">
             <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
             <p><strong>🕒 Orari:</strong> <span id="orari">...</span></p>
+            <p><strong>Stato:</strong> <span id="stato-box">Verifica in corso...</span></p>
         </div>
 
         <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
@@ -73,12 +74,28 @@
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = "url('" + data.copertina + "')";
             document.getElementById('logo').src = data.logo;
-            
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
+            document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
+
+            // Logica Stato Automatico
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes(); 
+
+            const toMin = (t) => {
+                if (!t || typeof t !== 'string' || t.indexOf(':') === -1) return -1;
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            const ap1 = toMin(data.apMattina), chiu1 = toMin(data.chiuMattina);
+            const ap2 = toMin(data.apPomeriggio), chiu2 = toMin(data.chiuSera);
+
+            const isOpen = (currentTime >= ap1 && currentTime < chiu1) || (currentTime >= ap2 && currentTime < chiu2);
             
-            // Visualizzazione corretta degli orari dalle 4 colonne G, H, I, J
-            document.getElementById('orari').innerText = 
-                `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
+            const statoEl = document.getElementById('stato-box');
+            statoEl.innerHTML = isOpen 
+                ? '<span style="color:#28a745; font-size:18px;">●</span> Aperto' 
+                : '<span style="color:#dc3545; font-size:18px;">●</span> Chiuso';
         });
 
     function toggleCart() {
@@ -121,4 +138,3 @@
 </script>
 </body>
 </html>
-
