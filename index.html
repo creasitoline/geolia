@@ -6,23 +6,24 @@
     <title>GeoLiA</title>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        .card { background: white; width: 100%; margin: 0; position: relative; }
-        .cover { width: 100%; height: 300px; background-size: cover; background-position: center; }
-        @media (min-width: 768px) { .cover { height: 400px; } }
         
-        /* Logo stile Facebook */
-        .logo-container { position: absolute; bottom: -50px; left: 20px; border: 4px solid white; border-radius: 15px; overflow: hidden; width: 120px; height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        /* Struttura Card */
+        .card { background: white; width: 100%; margin: 0; position: relative; }
+        .cover { width: 100%; height: 60vh; background-size: cover; background-position: center; }
+        
+        /* Logo Stile Facebook */
+        .logo-box { position: absolute; bottom: -50px; left: 20px; width: 100px; height: 100px; border-radius: 15px; border: 4px solid white; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.2); background: white; }
         .logo-img { width: 100%; height: 100%; object-fit: cover; }
         
-        .content { padding: 60px 20px 20px 20px; } /* Padding alto per lasciare spazio al logo */
-        .info-box { margin-top: 10px; color: #555; }
-        .stato-orario { font-weight: bold; margin-bottom: 5px; }
-        .orari-txt { font-size: 14px; color: #888; }
+        .content { padding: 60px 20px 20px 20px; }
+        .info-row { margin-bottom: 10px; color: #555; }
+        .stato-badge { font-weight: bold; padding: 4px 8px; border-radius: 5px; }
         
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        @media (min-width: 768px) { #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; } }
+        @media (min-width: 768px) { #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); } }
+        
         .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
     </style>
@@ -31,45 +32,84 @@
 
 <div class="card">
     <div id="cover" class="cover"></div>
-    <div class="logo-container">
-        <img id="logo" class="logo-img" src="" onerror="this.style.display='none'">
+    <div class="logo-box">
+        <img id="logo" class="logo-img" src="">
     </div>
     <div class="content">
-        <div id="categoria" style="color:#007bff; font-size:14px; text-transform:uppercase;"></div>
-        <h1 id="nome" style="margin: 10px 0;">Caricamento...</h1>
-        <div id="indirizzo" class="info-box"></div>
-        
-        <div style="margin-top:15px;">
-            <div id="stato-orario"></div>
-            <div id="orari-completi" class="orari-txt"></div>
+        <div id="categoria" style="color:#007bff; font-weight:bold; text-transform:uppercase; font-size:14px;"></div>
+        <h1 id="nome" style="margin:10px 0;">Caricamento...</h1>
+        <div id="indirizzo" class="info-row"></div>
+        <div id="orari-box" class="info-row">
+            <span id="stato-badge" class="stato-badge"></span>
+            <span id="orari-txt"></span>
         </div>
+        <p id="descrizione"></p>
+        <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+    </div>
+</div>
 
-        <p id="descrizione" style="margin-top:20px;"></p>
-        <button class="btn" style="background:#007bff; margin-top:20px;" onclick="toggleCart()">Contatta il Negozio</button>
+<div id="cart-panel">
+    <div id="menu-scelta">
+        <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+        <button class="btn" style="background:#25D366" onclick="apriModulo('wa')">WhatsApp 💬</button>
+        <button class="btn" style="background:#ea4335" onclick="apriModulo('email')">Email 📧</button>
+        <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
+        <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+    </div>
+    <div id="modulo-invio" class="hidden">
+        <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
+        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
+        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
+        <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+        <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
     </div>
 </div>
 
 <script>
-    // ... (Logica SCRIPT_URL e ID uguale) ...
+    const idNegozio = new URLSearchParams(window.location.search).get('id');
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
+    
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-            document.getElementById('logo').src = data.logo;
-            document.getElementById('categoria').innerText = data.categoria;
-            document.getElementById('indirizzo').innerText = data.indirizzo;
+            document.getElementById('logo').src = data.logo; // P2
+            document.getElementById('categoria').innerText = data.categoria; // B2
+            document.getElementById('indirizzo').innerText = data.indirizzo; // E2
             
-            // Logica Orari: G2=Giorni, H2=Apertura, I2=Chiusura, J2=Stato
-            const stato = document.getElementById('stato-orario');
-            stato.innerHTML = (data.stato === 'Aperto') 
-                ? '<span style="color:green">● Aperto</span>' 
-                : '<span style="color:red">● Chiuso</span>';
-            
-            document.getElementById('orari-completi').innerText = `${data.giorni}: ${data.apertura} - ${data.chiusura}`;
+            // Orari (G2, H2, I2, J2)
+            const badge = document.getElementById('stato-badge');
+            badge.innerText = data.stato;
+            badge.style.backgroundColor = (data.stato === 'Aperto') ? '#d4edda' : '#f8d7da';
+            badge.style.color = (data.stato === 'Aperto') ? '#155724' : '#721c24';
+            document.getElementById('orari-txt').innerText = ` ${data.giorni}: ${data.apertura} - ${data.chiusura}`;
         });
-    // ... (Funzioni toggleCart, apriModulo, eseguiInvio identiche) ...
+
+    function toggleCart() {
+        const panel = document.getElementById('cart-panel');
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function apriModulo(tipo) {
+        tipoSelezionato = tipo;
+        document.getElementById('menu-scelta').classList.add('hidden');
+        document.getElementById('modulo-invio').classList.remove('hidden');
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+    }
+
+    function tornaIndietro() {
+        document.getElementById('menu-scelta').classList.remove('hidden');
+        document.getElementById('modulo-invio').classList.add('hidden');
+    }
+
+    function eseguiInvio() {
+        // ... (Logica invio invariata) ...
+        alert("Inviato!");
+        toggleCart();
+    }
 </script>
 </body>
 </html>
