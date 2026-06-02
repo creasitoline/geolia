@@ -8,8 +8,6 @@
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         
         .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
-        
-        /* Modificata solo l'altezza qui (da 60vh a 35vh) */
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; background-repeat: no-repeat; }
         
         .logo-container {
@@ -83,13 +81,15 @@
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
-    
+    let negozioData = {};
+    let tipoSelezionato = '';
+
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
+            negozioData = data; // Salviamo i dati globalmente
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
-            // Ripristinato caricamento copertina sicuro
             document.getElementById('cover').style.backgroundImage = "url('" + data.copertina + "')";
             document.getElementById('logo').src = data.logo;
         });
@@ -100,6 +100,7 @@
     }
 
     function apriModulo(tipo) {
+        tipoSelezionato = tipo;
         document.getElementById('menu-scelta').classList.add('hidden');
         document.getElementById('modulo-invio').classList.remove('hidden');
         document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
@@ -120,12 +121,12 @@
         const tel = document.getElementById('tel-utente').value;
         const msg = document.getElementById('msg-utente').value;
         const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
-        const numeroWa = (negozioData && negozioData.whatsapp) ? negozioData.whatsapp : "41764458866";
+        const numeroWa = (negozioData.whatsapp) ? negozioData.whatsapp : "41764458866";
         
         if (tipoSelezionato === 'wa') {
             window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
         } else {
-            window.location.href = `mailto:${(negozioData && negozioData.email) ? negozioData.email : ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
         }
         toggleCart();
         tornaIndietro();
