@@ -8,12 +8,11 @@
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         
         .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
-        .cover { width: 100%; height: 50vh; background-size: cover; background-position: center; }
+        .cover { width: 100%; height: 50vh; background-size: cover; background-position: center; background-color: #ddd; }
         
-        /* Logo stile Facebook: sovrapposto a metà copertina e metà contenuto */
         .logo-container {
             position: relative;
-            margin-top: -60px; /* Sposta il logo verso l'alto */
+            margin-top: -60px;
             margin-left: 20px;
             width: 120px;
             height: 120px;
@@ -24,7 +23,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             z-index: 10;
         }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
         
         .content { padding: 20px; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
@@ -88,12 +87,19 @@
         .then(r => r.json())
         .then(data => {
             negozioData = data;
-            document.getElementById('nome').innerText = data.nome;
-            document.getElementById('descrizione').innerText = data.descrizione;
+            document.getElementById('nome').innerText = data.nome || "Negozio";
+            document.getElementById('descrizione').innerText = data.descrizione || "";
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-            // Caricamento del logo (Assicurati che la chiave nel JSON sia 'logo')
-            document.getElementById('logo').src = data.logo;
-        });
+            
+            // Gestione logo con controllo validità
+            const logoEl = document.getElementById('logo');
+            if (data.logo && data.logo.length > 5) {
+                logoEl.src = data.logo;
+            } else {
+                logoEl.style.display = 'none'; // Nasconde se il link non esiste
+            }
+        })
+        .catch(err => console.error("Errore caricamento dati:", err));
 
     function toggleCart() {
         const panel = document.getElementById('cart-panel');
