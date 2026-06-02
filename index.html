@@ -12,7 +12,6 @@
         .logo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .content { padding: 20px; }
         
-        /* Nuova sezione Info */
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; font-size: 15px; }
         .info-box p { margin: 8px 0; }
 
@@ -75,9 +74,11 @@
             document.getElementById('cover').style.backgroundImage = "url('" + data.copertina + "')";
             document.getElementById('logo').src = data.logo;
             
-            // Inserimento Indirizzo e Orari
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
-            document.getElementById('orari').innerText = `${data.giorni || ''} | ${data.apertura || ''} - ${data.chiusura || ''}`;
+            
+            // Visualizzazione corretta degli orari dalle 4 colonne G, H, I, J
+            document.getElementById('orari').innerText = 
+                `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
         });
 
     function toggleCart() {
