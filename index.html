@@ -1,21 +1,57 @@
-function eseguiInvio() {
+<script>
+    const idNegozio = new URLSearchParams(window.location.search).get('id');
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
+    let negozioData = {};
+    let tipoSelezionato = '';
+
+    fetch(`${SCRIPT_URL}?id=${idNegozio}`)
+        .then(r => r.json())
+        .then(data => {
+            negozioData = data;
+            document.getElementById('nome').innerText = data.nome;
+            document.getElementById('descrizione').innerText = data.descrizione;
+            document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
+        });
+
+    function toggleCart() {
+        const panel = document.getElementById('cart-panel');
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function apriModulo(tipo) {
+        tipoSelezionato = tipo;
+        document.getElementById('menu-scelta').classList.add('hidden');
+        document.getElementById('modulo-invio').classList.remove('hidden');
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+    }
+
+    function tornaIndietro() {
+        document.getElementById('menu-scelta').classList.remove('hidden');
+        document.getElementById('modulo-invio').classList.add('hidden');
+    }
+
+    function azioneDiretta(tipo) {
+        if(tipo === 'tel') window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
+        toggleCart();
+    }
+
+    function eseguiInvio() {
         const nome = document.getElementById('nome-utente').value;
         const tel = document.getElementById('tel-utente').value;
         const msg = document.getElementById('msg-utente').value;
-        const ticket = `*RICHIESTA DA MYAREA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
+        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
         
-        // Definiamo il numero: se negozioData.whatsapp non esiste, usa quello fisso
-        const numeroWa = negozioData.whatsapp ? negozioData.whatsapp : "41764458866";
+        // Numero di default se quello della tabella non è caricato
+        const numeroWhatsApp = negozioData.whatsapp ? negozioData.whatsapp : "41764458866";
         
         if (tipoSelezionato === 'wa') {
-            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
+            window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(ticket)}`, '_blank');
         } else {
-            // Per l'email, se non presente, usiamo un fallback o lasciamo vuoto per non rompere
-            const indirizzoEmail = negozioData.email ? negozioData.email : "";
-            window.location.href = `mailto:${indirizzoEmail}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
         }
         
         fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id: idNegozio, action: 'click'}) });
         toggleCart();
         tornaIndietro();
     }
+</script>
