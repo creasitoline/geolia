@@ -49,7 +49,7 @@
 
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwN8QWBm-VfI2M7DR67c5wVJd9chy2YFX2c_8H5uoEh6Bn6f6KS6BrIgAhTJ3cQ0uL6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHTxtS_AbpfeQsz4bJxykjn9YyEF487RcghXKIBjZUu4J5CmSntmr-S-yYjo-cZxr6/exec";
     
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
