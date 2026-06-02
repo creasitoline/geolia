@@ -35,7 +35,7 @@
     // Recupera l'ID dall'URL (es: geolia.zone/?id=sg001)
     const urlParams = new URLSearchParams(window.location.search);
     const idNegozio = urlParams.get('id');
-    const SCRIPT_URL = "INSERISCI_QUI_IL_TUO_URL_DI_APPS_SCRIPT";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
 
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(response => response.json())
