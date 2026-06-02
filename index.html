@@ -1,7 +1,7 @@
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
     // USA L'URL DELLA TUA WEB APP AGGIORNATA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywnKXnws0b7VGw6D-HNRzNov9wQUt4EAO0xAZUlVlqt4apAE8ojHYhPn5nOxnKwzWe/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHTxtS_AbpfeQsz4bJxykjn9YyEF487RcghXKIBjZUu4J5CmSntmr-S-yYjo-cZxr6/exec";
     
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
