@@ -1,120 +1,41 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoLiA il portale semplice per trovare il tuo negozio</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 20px; }
-        
-        /* Layout Card responsive */
-        .card { background: white; max-width: 800px; margin: 20px auto; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .cover { height: 300px; background-size: cover; background-position: center; width: 100%; }
-        
-        .btn { display: block; color: white; padding: 15px; text-align: center; border-radius: 5px; cursor: pointer; border: none; width: 100%; font-size: 16px; margin-bottom: 10px; }
-        
-        /* Pannello responsive: centrato su PC, dal basso su Mobile */
-        #cart-panel { 
-            position: fixed; bottom: 0; left: 0; right: 0;
-            margin: auto; width: 95%; max-width: 450px; 
-            background: white; border-radius: 20px 20px 0 0; 
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.2); 
-            z-index: 1000; padding: 20px; box-sizing: border-box; display: none; 
-        }
+<style>
+    /* Miglioramento layout per look professionale */
+    .card { 
+        background: white; 
+        max-width: 450px; 
+        margin: 20px auto; 
+        border-radius: 20px; 
+        overflow: hidden; 
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        border: 1px solid #eee;
+    }
+    
+    .cover { height: 200px; background-size: cover; background-position: center; width: 100%; }
 
-        @media (min-width: 768px) {
-            #cart-panel { bottom: auto; top: 50%; transform: translateY(-50%); border-radius: 20px; }
-        }
-
-        .user-input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div id="cover" class="cover"></div>
-    <div style="padding:20px">
-        <h1 id="nome">Caricamento...</h1>
-        <p id="descrizione"></p>
-        <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
-    </div>
-</div>
-
-<div id="cart-panel">
-    <div id="menu-scelta">
-        <h3 style="margin-top:0">Come vuoi contattarci?</h3>
-        <button class="btn" style="background:#25D366" onclick="apriModulo('wa')">WhatsApp 💬</button>
-        <button class="btn" style="background:#ea4335" onclick="apriModulo('email')">Email 📧</button>
-        <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
-        <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
-    </div>
-
-    <div id="modulo-invio" class="hidden">
-        <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
-        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
-        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
-        <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
-        <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
-    </div>
-</div>
-
-<script>
-    const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
-    let negozioData = {};
-    let tipoSelezionato = '';
-
-    fetch(`${SCRIPT_URL}?id=${idNegozio}`)
-        .then(r => r.json())
-        .then(data => {
-            negozioData = data;
-            document.getElementById('nome').innerText = data.nome;
-            document.getElementById('descrizione').innerText = data.descrizione;
-            document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-        });
-
-    function toggleCart() {
-        const panel = document.getElementById('cart-panel');
-        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    /* Pannello con effetto scivolata e migliorato */
+    #cart-panel { 
+        position: fixed; 
+        bottom: 0; 
+        width: 100%; 
+        max-width: 450px; 
+        background: #fff; 
+        border-radius: 25px 25px 0 0; 
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.15); 
+        z-index: 9999; 
+        padding: 25px; 
+        box-sizing: border-box; 
+        display: none; 
+        transition: transform 0.3s ease-out;
     }
 
-    function apriModulo(tipo) {
-        tipoSelezionato = tipo;
-        document.getElementById('menu-scelta').classList.add('hidden');
-        document.getElementById('modulo-invio').classList.remove('hidden');
-        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+    /* Input più eleganti */
+    .user-input { 
+        width: 100%; 
+        padding: 15px; 
+        margin: 8px 0; 
+        border: 2px solid #f0f0f0; 
+        border-radius: 12px; 
+        box-sizing: border-box; 
+        font-size: 15px;
     }
-
-    function tornaIndietro() {
-        document.getElementById('menu-scelta').classList.remove('hidden');
-        document.getElementById('modulo-invio').classList.add('hidden');
-    }
-
-    function azioneDiretta(tipo) {
-        if(tipo === 'tel') window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
-        toggleCart();
-    }
-
-    function eseguiInvio() {
-        const nome = document.getElementById('nome-utente').value;
-        const tel = document.getElementById('tel-utente').value;
-        const msg = document.getElementById('msg-utente').value;
-        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
-        
-        const numeroWa = (negozioData.whatsapp && negozioData.whatsapp.trim() !== "") ? negozioData.whatsapp : "41764458866";
-        
-        if (tipoSelezionato === 'wa') {
-            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
-        } else {
-            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
-        }
-        
-        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id: idNegozio, action: 'click'}) });
-        toggleCart();
-        tornaIndietro();
-    }
-</script>
-</body>
-</html>
+</style>
