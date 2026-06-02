@@ -7,12 +7,24 @@
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         
-        .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
-        .cover { width: 100%; height: 60vh; background-size: cover; background-position: center; }
+        .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
+        .cover { width: 100%; height: 50vh; background-size: cover; background-position: center; }
         
-        /* Contenitore Logo sovrapposto */
-        .logo-wrapper { margin: -50px 0 0 20px; position: relative; z-index: 10; }
-        .logo-img { width: 100px; height: 100px; border-radius: 15px; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); object-fit: cover; background: white; }
+        /* Logo stile Facebook: sovrapposto a metà copertina e metà contenuto */
+        .logo-container {
+            position: relative;
+            margin-top: -60px; /* Sposta il logo verso l'alto */
+            margin-left: 20px;
+            width: 120px;
+            height: 120px;
+            border: 4px solid white;
+            border-radius: 15px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
         
         .content { padding: 20px; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
@@ -36,11 +48,10 @@
 
 <div class="card">
     <div id="cover" class="cover"></div>
-    
-    <div class="logo-wrapper">
-        <img id="logo" class="logo-img" src="" onerror="this.style.display='none'">
+    <div class="logo-container">
+        <img id="logo" src="" onerror="this.style.display='none'">
     </div>
-
+    
     <div class="content">
         <h1 id="nome">Caricamento...</h1>
         <p id="descrizione"></p>
@@ -70,15 +81,18 @@
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
-    
+    let negozioData = {};
+    let tipoSelezionato = '';
+
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
+            negozioData = data;
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-            // Aggiunto caricamento logo
-            document.getElementById('logo').src = data.logo; 
+            // Caricamento del logo (Assicurati che la chiave nel JSON sia 'logo')
+            document.getElementById('logo').src = data.logo;
         });
 
     function toggleCart() {
@@ -87,8 +101,10 @@
     }
 
     function apriModulo(tipo) {
+        tipoSelezionato = tipo;
         document.getElementById('menu-scelta').classList.add('hidden');
         document.getElementById('modulo-invio').classList.remove('hidden');
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
     }
 
     function tornaIndietro() {
@@ -96,7 +112,24 @@
         document.getElementById('modulo-invio').classList.add('hidden');
     }
 
+    function azioneDiretta(tipo) {
+        if(tipo === 'tel') window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
+        toggleCart();
+    }
+
     function eseguiInvio() {
+        const nome = document.getElementById('nome-utente').value;
+        const tel = document.getElementById('tel-utente').value;
+        const msg = document.getElementById('msg-utente').value;
+        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
+        const numeroWa = (negozioData.whatsapp && negozioData.whatsapp.trim() !== "") ? negozioData.whatsapp : "41764458866";
+        
+        if (tipoSelezionato === 'wa') {
+            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
+        } else {
+            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+        }
+        fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id: idNegozio, action: 'click'}) });
         toggleCart();
         tornaIndietro();
     }
