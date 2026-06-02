@@ -5,12 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoLiA il portale semplice per trovare il tuo negozio</title>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 100px; }
-        .card { background: white; max-width: 400px; margin: 20px auto; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .cover { height: 150px; background-size: cover; background-position: center; }
+        body { font-family: sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 20px; }
+        
+        /* Layout Card responsive */
+        .card { background: white; max-width: 800px; margin: 20px auto; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .cover { height: 300px; background-size: cover; background-position: center; width: 100%; }
+        
         .btn { display: block; color: white; padding: 15px; text-align: center; border-radius: 5px; cursor: pointer; border: none; width: 100%; font-size: 16px; margin-bottom: 10px; }
         
-        #cart-panel { position: fixed; bottom: 0; width: 100%; max-width: 400px; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.2); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; }
+        /* Pannello responsive: centrato su PC, dal basso su Mobile */
+        #cart-panel { 
+            position: fixed; bottom: 0; left: 0; right: 0;
+            margin: auto; width: 95%; max-width: 450px; 
+            background: white; border-radius: 20px 20px 0 0; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2); 
+            z-index: 1000; padding: 20px; box-sizing: border-box; display: none; 
+        }
+
+        @media (min-width: 768px) {
+            #cart-panel { bottom: auto; top: 50%; transform: translateY(-50%); border-radius: 20px; }
+        }
+
         .user-input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .hidden { display: none; }
     </style>
@@ -88,7 +103,6 @@
         const msg = document.getElementById('msg-utente').value;
         const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
         
-        // Verifica numero WhatsApp, fallback su 41764458866
         const numeroWa = (negozioData.whatsapp && negozioData.whatsapp.trim() !== "") ? negozioData.whatsapp : "41764458866";
         
         if (tipoSelezionato === 'wa') {
