@@ -1,103 +1,21 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyArea Widget</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 100px; }
-        .card { background: white; max-width: 400px; margin: 20px auto; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .cover { height: 150px; background-size: cover; background-position: center; }
-        .btn { display: block; color: white; padding: 15px; text-align: center; border-radius: 5px; cursor: pointer; border: none; width: 100%; font-size: 16px; margin-bottom: 10px; }
-        
-        #cart-panel { position: fixed; bottom: 0; width: 100%; max-width: 400px; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.2); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .hidden { display: none; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <div id="cover" class="cover"></div>
-    <div style="padding:20px">
-        <h1 id="nome">Caricamento...</h1>
-        <p id="descrizione"></p>
-        <button class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
-    </div>
-</div>
-
-<div id="cart-panel">
-    <div id="menu-scelta">
-        <h3 style="margin-top:0">Come vuoi contattarci?</h3>
-        <button class="btn" style="background:#25D366" onclick="apriModulo('wa')">WhatsApp 💬</button>
-        <button class="btn" style="background:#ea4335" onclick="apriModulo('email')">Email 📧</button>
-        <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
-        <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
-    </div>
-
-    <div id="modulo-invio" class="hidden">
-        <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
-        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
-        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
-        <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
-        <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
-    </div>
-</div>
-
-<script>
-    const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAUnuCQcCOjSqtbBzwotfEaCBY-SaMFbiYZ9vzhAqq9YI9dwcETK1-vW1HP7D_Zsx8/exec";
-    let negozioData = {};
-    let tipoSelezionato = '';
-
-    fetch(`${SCRIPT_URL}?id=${idNegozio}`)
-        .then(r => r.json())
-        .then(data => {
-            negozioData = data;
-            document.getElementById('nome').innerText = data.nome;
-            document.getElementById('descrizione').innerText = data.descrizione;
-            document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
-        });
-
-    function toggleCart() {
-        const panel = document.getElementById('cart-panel');
-        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-    }
-
-    function apriModulo(tipo) {
-        tipoSelezionato = tipo;
-        document.getElementById('menu-scelta').classList.add('hidden');
-        document.getElementById('modulo-invio').classList.remove('hidden');
-        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
-    }
-
-    function tornaIndietro() {
-        document.getElementById('menu-scelta').classList.remove('hidden');
-        document.getElementById('modulo-invio').classList.add('hidden');
-    }
-
-    function azioneDiretta(tipo) {
-        if(tipo === 'tel') window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
-        toggleCart();
-    }
-
-    function eseguiInvio() {
+function eseguiInvio() {
         const nome = document.getElementById('nome-utente').value;
         const tel = document.getElementById('tel-utente').value;
         const msg = document.getElementById('msg-utente').value;
         const ticket = `*RICHIESTA DA MYAREA*\nNome: ${nome}\nTel: ${tel}\nMessaggio: ${msg}`;
         
+        // Definiamo il numero: se negozioData.whatsapp non esiste, usa quello fisso
+        const numeroWa = negozioData.whatsapp ? negozioData.whatsapp : "41764458866";
+        
         if (tipoSelezionato === 'wa') {
-            window.open(`https://wa.me/${negozioData.whatsapp}?text=${encodeURIComponent(ticket)}`);
+            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
         } else {
-            window.location.href = `mailto:${negozioData.email}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+            // Per l'email, se non presente, usiamo un fallback o lasciamo vuoto per non rompere
+            const indirizzoEmail = negozioData.email ? negozioData.email : "";
+            window.location.href = `mailto:${indirizzoEmail}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
         }
         
         fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({id: idNegozio, action: 'click'}) });
         toggleCart();
         tornaIndietro();
     }
-</script>
-</body>
-</html>
