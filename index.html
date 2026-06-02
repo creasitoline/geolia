@@ -62,7 +62,7 @@
 
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxwp3nvTDwWDrmdM0laOUL6_4yA9gMf82_OPpKK-iqSdYHD269zdGk1x9t5ldgrsUKm/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1OA1FIkMIZCvwXGfysOV1801rhiZxA26QQPKrfZH3Z0TC_RgmrNN3yU2Fq72pXDhU/exec";
     let negozioData = {};
     let tipoSelezionato = '';
 
@@ -76,6 +76,14 @@
             document.getElementById('logo').src = data.logo;
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
             document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
+
+            // Iniezione dinamica del JSON-LD per la SEO Geografica
+            if (data.jsonLd) {
+                const script = document.createElement('script');
+                script.type = 'application/ld+json';
+                script.text = data.jsonLd;
+                document.head.appendChild(script);
+            }
 
             // Logica Stato Automatico
             const now = new Date();
