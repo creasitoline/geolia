@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">GeoLiA</title>
     <meta name="description" id="meta-desc" content="Hub di ricerca locale GeoLiA.zone">
+    <script id="jsonld-placeholder" type="application/ld+json"></script>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
@@ -80,11 +81,10 @@
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
             document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
 
+            // Aggiornamento del JSON-LD esistente
             if (data.jsonLd) {
-                const script = document.createElement('script');
-                script.type = 'application/ld+json';
-                script.text = data.jsonLd;
-                document.head.appendChild(script);
+                const jsonLdTag = document.getElementById('jsonld-placeholder');
+                jsonLdTag.textContent = data.jsonLd;
             }
 
             if (data.limite > 0 && data.count >= data.limite) {
