@@ -75,6 +75,15 @@
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
             document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
 
+            // --- AGGIUNTA DINAMICA JSON-LD PER SEO ---
+            if (data.jsonLd) {
+                const script = document.createElement('script');
+                script.type = 'application/ld+json';
+                script.text = data.jsonLd;
+                document.head.appendChild(script);
+            }
+            // ------------------------------------------
+
             if (data.limite > 0 && data.count >= data.limite) {
                 document.getElementById('btn-contatta').innerText = "LIMITE RAGGIUNTO";
                 document.getElementById('btn-contatta').style.backgroundColor = "#ccc";
