@@ -12,8 +12,11 @@
         .logo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .content { padding: 20px; }
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; font-size: 15px; }
+        .info-box p { margin: 8px 0; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
+        @media (min-width: 768px) { #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); } }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
         #status-limit { font-size: 12px; color: #666; text-align: center; margin-top: 10px; }
     </style>
@@ -29,6 +32,7 @@
         <div class="info-box">
             <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
             <p><strong>🕒 Orari:</strong> <span id="orari">...</span></p>
+            <p><strong>Stato:</strong> <span id="stato-box">Verifica in corso...</span></p>
         </div>
         <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
         <p id="status-limit"></p>
@@ -37,18 +41,27 @@
 
 <div id="cart-panel">
     <div id="menu-scelta">
-        <h3>Come vuoi contattarci?</h3>
-        <button class="btn" style="background:#25D366" onclick="azioneClick('wa')">WhatsApp 💬</button>
-        <button class="btn" style="background:#ea4335" onclick="azioneClick('email')">Email 📧</button>
-        <button class="btn" style="background:#343a40" onclick="azioneClick('tel')">Telefono 📞</button>
+        <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+        <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+        <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
+        <button class="btn" style="background:#343a40" onclick="registraEApri('tel')">Telefono 📞</button>
         <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+    </div>
+    <div id="modulo-invio" class="hidden">
+        <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
+        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
+        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
+        <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+        <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
     </div>
 </div>
 
 <script>
     const idNegozio = new URLSearchParams(window.location.search).get('id');
-    const SCRIPT_URL = "TUO_LINK_SCRIPT_APPS_SCRIPT"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwppXjjJmZejfyiwEytOIGG_TqjHALwNz0RRoG5YHxxQ2SIYt5FZAfYFYPPv5jV8hW4/exec";
     let negozioData = {};
+    let tipoSelezionato = '';
 
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
@@ -58,18 +71,25 @@
             document.getElementById('descrizione').innerText = data.descrizione;
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
             document.getElementById('logo').src = data.logo;
-            document.getElementById('indirizzo').innerText = data.indirizzo;
-            document.getElementById('orari').innerText = `Mattina: ${data.apMattina}-${data.chiuMattina} | Pom: ${data.apPomeriggio}-${data.chiuSera}`;
+            document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
+            document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
 
             // Controllo Limite
             if (data.limite > 0 && data.count >= data.limite) {
                 document.getElementById('btn-contatta').innerText = "LIMITE RAGGIUNTO";
                 document.getElementById('btn-contatta').style.backgroundColor = "#ccc";
-                document.getElementById('btn-contatta').onclick = null;
-                document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b><br>Contatta l'amministratore per sbloccare il piano Premium.";
+                document.getElementById('btn-contatta').onclick = () => alert("Contatta l'amministratore per passare al piano Premium.");
+                document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b>";
             } else {
-                document.getElementById('status-limit').innerText = `Accessi: ${data.count} / ${data.limite}`;
+                document.getElementById('status-limit').innerText = `Accessi: ${data.count || 0} / ${data.limite || 0}`;
             }
+
+            // Logica Stato
+            const now = new Date();
+            const time = now.getHours() * 60 + now.getMinutes();
+            const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
+            const isOpen = (time >= toMin(data.apMattina) && time < toMin(data.chiuMattina)) || (time >= toMin(data.apPomeriggio) && time < toMin(data.chiuSera));
+            document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">●</span> Aperto' : '<span style="color:#dc3545">●</span> Chiuso';
         });
 
     function toggleCart() {
@@ -77,16 +97,39 @@
         panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
     }
 
-    function azioneClick(tipo) {
-        // Registra il click sul foglio Google
+    function registraEApri(tipo) {
+        // Registra il click
         fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`);
         
-        // Esegue l'azione
-        if (tipo === 'wa') window.open(`https://wa.me/${negozioData.whatsapp}`);
-        if (tipo === 'email') window.location.href = `mailto:${negozioData.email}`;
-        if (tipo === 'tel') window.location.href = `tel:${negozioData.telefono}`;
+        if (tipo === 'tel') {
+            window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
+            toggleCart();
+        } else {
+            tipoSelezionato = tipo;
+            document.getElementById('menu-scelta').classList.add('hidden');
+            document.getElementById('modulo-invio').classList.remove('hidden');
+            document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+        }
+    }
+
+    function eseguiInvio() {
+        const nome = document.getElementById('nome-utente').value;
+        const msg = document.getElementById('msg-utente').value;
+        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`;
+        const numeroWa = negozioData.whatsapp || "41764458866";
         
+        if (tipoSelezionato === 'wa') {
+            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
+        } else {
+            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+        }
         toggleCart();
+        tornaIndietro();
+    }
+
+    function tornaIndietro() {
+        document.getElementById('menu-scelta').classList.remove('hidden');
+        document.getElementById('modulo-invio').classList.add('hidden');
     }
 </script>
 </body>
