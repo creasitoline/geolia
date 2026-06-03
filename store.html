@@ -18,7 +18,7 @@
         @media (min-width: 768px) { #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); } }
         .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
-        #status-limit { font-size: 12px; color: #666; text-align: center; margin-top: 10px; }
+        #status-limit { font-size: 13px; color: #666; text-align: center; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -36,6 +36,7 @@
         </div>
         <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
         <p id="status-limit"></p>
+        <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
     </div>
 </div>
 
@@ -44,7 +45,7 @@
         <h3 style="margin-top:0">Come vuoi contattarci?</h3>
         <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
         <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
-        <button class="btn" style="background:#343a40" onclick="registraEApri('tel')">Telefono 📞</button>
+        <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
         <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
     </div>
     <div id="modulo-invio" class="hidden">
@@ -74,17 +75,16 @@
             document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
             document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
 
-            // Controllo Limite
             if (data.limite > 0 && data.count >= data.limite) {
                 document.getElementById('btn-contatta').innerText = "LIMITE RAGGIUNTO";
                 document.getElementById('btn-contatta').style.backgroundColor = "#ccc";
-                document.getElementById('btn-contatta').onclick = () => alert("Contatta l'amministratore per passare al piano Premium.");
-                document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b>";
+                document.getElementById('btn-contatta').onclick = null;
+                document.getElementById('status-limit').innerHTML = "<b>Sei il titolare di questo profilo?</b><br>Limite contatti raggiunto.";
+                document.getElementById('btn-premium').style.display = "block";
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${data.count || 0} / ${data.limite || 0}`;
             }
 
-            // Logica Stato
             const now = new Date();
             const time = now.getHours() * 60 + now.getMinutes();
             const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
@@ -98,18 +98,24 @@
     }
 
     function registraEApri(tipo) {
-        // Registra il click
         fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`);
-        
-        if (tipo === 'tel') {
+        tipoSelezionato = tipo;
+        document.getElementById('menu-scelta').classList.add('hidden');
+        document.getElementById('modulo-invio').classList.remove('hidden');
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+    }
+
+    function azioneDiretta(tipo) {
+        if(tipo === 'tel') {
+            fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`);
             window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
-            toggleCart();
-        } else {
-            tipoSelezionato = tipo;
-            document.getElementById('menu-scelta').classList.add('hidden');
-            document.getElementById('modulo-invio').classList.remove('hidden');
-            document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
         }
+        toggleCart();
+    }
+
+    function contattaAdmin() {
+        const msg = `Ciao, sono il titolare del profilo ${negozioData.nome || ''}. Vorrei passare al piano a pagamento Premium.`;
+        window.open(`https://wa.me/41764458866?text=${encodeURIComponent(msg)}`);
     }
 
     function eseguiInvio() {
@@ -117,12 +123,8 @@
         const msg = document.getElementById('msg-utente').value;
         const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`;
         const numeroWa = negozioData.whatsapp || "41764458866";
-        
-        if (tipoSelezionato === 'wa') {
-            window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
-        } else {
-            window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
-        }
+        if (tipoSelezionato === 'wa') window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
+        else window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
         toggleCart();
         tornaIndietro();
     }
