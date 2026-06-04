@@ -35,7 +35,7 @@
                 <p><strong>📍 Indirizzo:</strong> <span id="indirizzo"></span></p>
                 <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
-                <p id="status-limit" style="margin-top:10px; font-size: 14px; font-weight: bold;"></p>
+                <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
             </div>
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
             <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
@@ -64,20 +64,20 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo",
-            authDomain: "geolia-b5b99.firebaseapp.com",
-            projectId: "geolia-b5b99",
-            storageBucket: "geolia-b5b99.firebasestorage.app",
-            messagingSenderId: "760719863827",
-            appId: "1:760719863827:web:9f0c1419d81208cee20fe6"
-        };
-
-        const db = getFirestore(initializeApp(firebaseConfig));
+        const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
         
-        window.d = {}; 
-        window.tipoSelezionato = '';
+        window.d = {}; window.tipoSelezionato = '';
+
+        function aggiornaStatoUI(dati) {
+            if (dati.limite > 0 && dati.count >= dati.limite) {
+                document.getElementById('btn-contatta').style.display = "none";
+                document.getElementById('btn-premium').style.display = "block";
+                document.getElementById('status-limit').innerHTML = "Limite contatti raggiunto.";
+            } else {
+                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0}`;
+            }
+        }
 
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
@@ -86,25 +86,31 @@
                 document.getElementById('nome').innerText = d.nome || "Negozio";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
-                document.getElementById('orari').innerText = d.orari || "";
+                document.getElementById('orari').innerText = d.orari.replace(',', ' | ');
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 
-                // Gestione Limite
-                if (d.limite > 0 && d.count >= d.limite) {
-                    document.getElementById('btn-contatta').style.display = "none";
-                    document.getElementById('btn-premium').style.display = "block";
-                    document.getElementById('status-limit').innerHTML = "Limite contatti raggiunto, sei il proprietario di questo profilo?.";
-                } else {
-                    document.getElementById('status-limit').innerText = `Accessi: ${d.count || 0} / ${d.limite || 0}`;
-                }
+                const now = new Date();
+                const currentTime = now.getHours() * 100 + now.getMinutes();
+                let aperto = false;
+                d.orari.split(',').forEach(fascia => {
+                    const [ap, chi] = fascia.split('-').map(t => parseInt(t.replace(':', '')));
+                    if (currentTime >= ap && currentTime < chi) aperto = true;
+                });
+                document.getElementById('stato-box').innerHTML = aperto ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
+                aggiornaStatoUI(window.d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); };
+        window.incrementaClick = async () => { 
+            await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) });
+            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
+            window.d = docSnap.data();
+            aggiornaStatoUI(window.d);
+        };
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
         window.registraEApri = (tipo) => { window.tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
         window.azioneDiretta = async (tipo) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
