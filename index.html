@@ -43,17 +43,16 @@
     </nav>
 
     <script>
-        // INSERISCI QUI IL TUO URL
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcn7w4nx3q7Ccu9VCQmQKDofGkI1KGmibiAa3IHiXWXnczAXRr8MHx2yEy7VIznsjP/exec";
 
         fetch(SCRIPT_URL)
             .then(r => r.json())
             .then(data => {
                 const container = document.getElementById('lista-negozi');
-                // Se la colonna copertina è vuota, usa un placeholder grigio
+                // Abbiamo cambiato n.copertina in n.logo per corrispondere allo script
                 container.innerHTML = data.map(n => `
                     <div class="card">
-                        <img src="${n.copertina || 'https://via.placeholder.com/150/e0e0e0/555?text=GeoLiA'}">
+                        <img src="${n.logo || 'https://via.placeholder.com/150/e0e0e0/555?text=Logo'}" alt="${n.nome}">
                         <div class="info">
                             <h4>${n.nome}</h4>
                             <a href="${n.id}.html" class="btn-vai">VEDI NEGOZIO</a>
