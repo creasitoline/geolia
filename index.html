@@ -2,47 +2,41 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>GeoLiA - Home</title>
-    <link rel="icon" href="tuo-logo.png">
+    <title>GeoLiA Home</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding-bottom: 80px; }
-        .header { padding: 20px; text-align: center; }
-        .search-box { width: 90%; padding: 15px; margin: 10px; border-radius: 20px; border: 1px solid #ccc; }
-        .filters { display: flex; overflow-x: auto; padding: 10px; gap: 10px; }
-        .link-list { padding: 20px; }
-        .nav-bottom { position: fixed; bottom: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; }
+        body { font-family: sans-serif; padding: 20px; }
+        .filter-btn { margin: 5px; padding: 10px; cursor: pointer; }
+        .neg-link { display: block; padding: 15px; border-bottom: 1px solid #eee; text-decoration: none; color: #333; }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <img src="tuo-logo.png" width="100">
-        <input type="text" id="search" class="search-box" placeholder="Cerca negozio..." onkeyup="filtra()">
-    </div>
-
-    <div class="filters">
-        <button onclick="filtraCategoria('tutti')">Tutti</button>
-        <button onclick="filtraCategoria('pizza')">Pizza</button>
-        <button onclick="filtraCategoria('gelato')">Gelato</button>
-    </div>
-
-    <div class="link-list" id="lista">
-        <div class="item" data-cat="pizza"><a href="pizza-amore.html">PizzAmore</a></div>
-        <div class="item" data-cat="gelato"><a href="gelateria-top.html">Gelateria Top</a></div>
-    </div>
-
-    <div class="nav-bottom">
-        <span>⬅️ Indietro</span>
-        <span>🏠 Home</span>
-    </div>
+    <h1>Negozi GeoLiA</h1>
+    <div id="filtri"></div>
+    <div id="lista-negozi"></div>
 
     <script>
-        function filtra() {
-            let input = document.getElementById('search').value.toLowerCase();
-            let items = document.getElementsByClassName('item');
-            for (let i of items) {
-                i.style.display = i.innerText.toLowerCase().includes(input) ? "" : "none";
-            }
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcn7w4nx3q7Ccu9VCQmQKDofGkI1KGmibiAa3IHiXWXnczAXRr8MHx2yEy7VIznsjP/exec";
+
+        fetch(SCRIPT_URL)
+            .then(r => r.json())
+            .then(data => {
+                // Crea i filtri
+                let cats = [...new Set(data.map(n => n.cat))];
+                document.getElementById('filtri').innerHTML = cats.map(c => 
+                    `<button class="filter-btn" onclick="filtra('${c}')">${c}</button>`).join('');
+                render(data);
+            });
+
+        function render(data) {
+            document.getElementById('lista-negozi').innerHTML = data.map(n => 
+                `<a class="neg-link" href="${n.id}.html">${n.nome}</a>`).join('');
+        }
+
+        function filtra(cat) {
+            fetch(SCRIPT_URL).then(r => r.json()).then(data => {
+                let filtrati = data.filter(n => n.cat === cat);
+                render(filtrati);
+            });
         }
     </script>
 </body>
