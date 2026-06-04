@@ -11,40 +11,21 @@
       "@context": "https://schema.org",
       "@type": "Restaurant",
       "name": "PizzAmore",
-      "description": "La migliore pizza, kebab e tacos a Paradiso. Servizio di ordinazione a domicilio e d'asporto disponibile.",
+      "description": "La migliore pizza, kebab e tacos a Paradiso.",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Via Franco Zorzi 27",
         "addressLocality": "Paradiso",
-        "addressRegion": "Ticino",
         "postalCode": "6900",
         "addressCountry": "CH"
       },
-      "telephone": "+4191458248",
-      "servesCuisine": ["Pizza", "Kebab", "Tacos"],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Menu",
-        "itemListElement": [
-          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Pizza" } },
-          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Kebab" } },
-          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Tacos" } }
-        ]
-      },
-      "openingHoursSpecification": [
-        {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-          "opens": "08:00",
-          "closes": "23:00"
-        }
-      ]
+      "telephone": "+4191458248"
     }
     </script>
     
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        .card { background: white; width: 100%; margin: 0; border-radius: 0; position: relative; }
+        .card { background: white; width: 100%; margin: 0; position: relative; }
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
         .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .logo-container img { width: 100%; height: 100%; object-fit: cover; }
