@@ -73,7 +73,7 @@
             if (dati.limite > 0 && dati.count >= dati.limite) {
                 document.getElementById('btn-contatta').style.display = "none";
                 document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = "Limite contatti raggiunto.";
+                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Non perdere le prossime richieste dei tuoi clienti. Passa al piano Premium per sbloccare contatti illimitati e far crescere la tua attività.";
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0}`;
             }
