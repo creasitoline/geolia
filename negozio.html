@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">GeoLiA</title>
-    <meta name="description" id="meta-desc" content="Hub di ricerca locale GeoLiA.zone">
     <script type="application/ld+json" id="json-ld"></script>
-
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -19,7 +17,6 @@
         .content { padding: 20px; }
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -30,22 +27,21 @@
         <div id="cover" class="cover"></div>
         <div class="logo-container"><img id="logo" src="" alt="Logo"></div>
         <div class="content">
-            <h1 id="nome">Caricamento...</h1>
+            <h1 id="nome">...</h1>
             <p id="descrizione"></p>
             <div class="info-box">
                 <p><strong>📍 Indirizzo:</strong> <span id="indirizzo"></span></p>
                 <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
             </div>
-            <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+            <button class="btn" style="background:#007bff">Contatta il Negozio</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 1. INCOLLA QUI LA TUA CONFIGURAZIONE
         const firebaseConfig = {
             apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo",
             authDomain: "geolia-b5b99.firebaseapp.com",
@@ -55,29 +51,28 @@
             appId: "1:760719863827:web:9f0c1419d81208cee20fe6"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getFirestore(initializeApp(firebaseConfig));
+        const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
 
-        // 2. Prendi ID dall'URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const idNegozio = urlParams.get('id') || "pizza-amore";
-
-        // 3. Carica i dati
         async function caricaDati() {
-            const docRef = doc(db, "negozi", idNegozio);
-            const docSnap = await getDoc(docRef);
-
+            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('nome').innerText = data.nome;
-                document.getElementById('descrizione').innerText = data.descrizione;
-                document.getElementById('indirizzo').innerText = data.indirizzo;
-                document.getElementById('logo').src = data.logo;
-                document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
+                const d = docSnap.data();
+                document.getElementById('nome').innerText = d.nome;
+                document.getElementById('descrizione').innerText = d.descrizione;
+                document.getElementById('indirizzo').innerText = d.indirizzo;
+                document.getElementById('logo').src = d.logo;
+                document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
+                document.getElementById('orari').innerText = d.orari;
                 
-                // Inietta JSON-LD
-                document.getElementById('json-ld').innerHTML = JSON.stringify(data.schema);
-                
+                // Logica Aperto/Chiuso (basata su orari nel formato 08:00-23:00)
+                const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
+                const now = new Date().getHours() * 100 + new Date().getMinutes();
+                const isOpen = now >= ap && now < chi;
+                document.getElementById('stato-box').innerHTML = isOpen ? 
+                    '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+
+                document.getElementById('json-ld').innerHTML = JSON.stringify(d.schema);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
