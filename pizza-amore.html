@@ -3,29 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">PizzAmore | GeoLiA.zone</title>
-    <meta name="description" content="La migliore pizza, kebab e tacos a Paradiso. Servizio di ordinazione a domicilio e d'asporto disponibile.">
+    <title id="page-title">GeoLiA</title>
+    <meta name="description" id="meta-desc" content="Hub di ricerca locale GeoLiA.zone">
     
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Restaurant",
       "name": "PizzAmore",
-      "description": "La migliore pizza, kebab e tacos a Paradiso.",
+      "description": "La migliore pizza, kebab e tacos a Paradiso. Servizio di ordinazione a domicilio e d'asporto disponibile.",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Via Franco Zorzi 27",
         "addressLocality": "Paradiso",
+        "addressRegion": "Ticino",
         "postalCode": "6900",
         "addressCountry": "CH"
       },
-      "telephone": "+4191458248"
+      "telephone": "+4191458248",
+      "servesCuisine": ["Pizza", "Kebab", "Tacos"],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Menu",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Pizza" } },
+          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Kebab" } },
+          { "@type": "Offer", "itemOffered": { "@type": "MenuItem", "name": "Tacos" } }
+        ]
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "08:00",
+          "closes": "23:00"
+        }
+      ]
     }
     </script>
-    
+
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        .card { background: white; width: 100%; margin: 0; position: relative; }
+        .card { background: white; width: 100%; margin: 0; border-radius: 0; position: relative; }
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
         .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .logo-container img { width: 100%; height: 100%; object-fit: cover; }
@@ -51,6 +70,8 @@
             <p><strong>Stato:</strong> <span id="stato-box">Verifica in corso...</span></p>
         </div>
         <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+        <p id="status-limit" style="font-size:13px; text-align:center;"></p>
+        <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
     </div>
 </div>
 
@@ -58,24 +79,45 @@
     <div id="menu-scelta">
         <h3 style="margin-top:0">Come vuoi contattarci?</h3>
         <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+        <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
+        <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
         <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+    </div>
+    <div id="modulo-invio" class="hidden">
+        <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
+        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
+        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
+        <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+        <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
     </div>
 </div>
 
 <script>
     const idNegozio = "pizza_amore"; 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbKZi155BNGtFXQwLVrP9HgqteBwbSBICXI8s6IQJHs5240F3AIKEt9fBxyfQgGiJQ/exec";
-    
+    let negozioData = {}, tipoSelezionato = '';
+
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
+            negozioData = data;
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
+            document.getElementById('page-title').innerText = `${data.nome} | GeoLiA.zone`;
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
             document.getElementById('logo').src = data.logo;
             document.getElementById('indirizzo').innerText = data.indirizzo || "N/D";
             document.getElementById('orari').innerText = `${data.apMattina}-${data.chiuMattina} | ${data.apPomeriggio}-${data.chiuSera}`;
             
+            if (data.limite > 0 && data.count >= data.limite) {
+                document.getElementById('btn-contatta').style.display = "none";
+                document.getElementById('btn-premium').style.display = "block";
+                document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b>";
+            } else {
+                document.getElementById('status-limit').innerText = `Accessi: ${data.count || 0} / ${data.limite || 0}`;
+            }
+
             const now = new Date();
             const time = now.getHours() * 60 + now.getMinutes();
             const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
@@ -84,7 +126,11 @@
         });
 
     function toggleCart() { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; }
-    function registraEApri(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); alert("Segnalato!"); toggleCart(); }
+    function registraEApri(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; }
+    function azioneDiretta(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); window.location.href = `tel:${negozioData.telefono || '41764458866'}`; toggleCart(); }
+    function contattaAdmin() { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); }
+    function eseguiInvio() { const nome = document.getElementById('nome-utente').value; const msg = document.getElementById('msg-utente').value; const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`; if (tipoSelezionato === 'wa') window.open(`https://wa.me/${negozioData.whatsapp || '41764458866'}?text=${encodeURIComponent(ticket)}`); else window.location.href = `mailto:${negozioData.email}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`; toggleCart(); tornaIndietro(); }
+    function tornaIndietro() { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); }
 </script>
 </body>
 </html>
