@@ -126,10 +126,36 @@
         });
 
     function toggleCart() { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; }
-    function registraEApri(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; }
-    function azioneDiretta(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); window.location.href = `tel:${negozioData.telefono || '41764458866'}`; toggleCart(); }
+    
+    // QUI NESSUN FETCH: apre solo il modulo
+    function registraEApri(tipo) { 
+        tipoSelezionato = tipo; 
+        document.getElementById('menu-scelta').classList.add('hidden'); 
+        document.getElementById('modulo-invio').classList.remove('hidden'); 
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; 
+    }
+    
+    // QUI FETCH: conteggio immediato perché chiama direttamente
+    function azioneDiretta(tipo) { 
+        fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); 
+        window.location.href = `tel:${negozioData.telefono || '41764458866'}`; 
+        toggleCart(); 
+    }
+    
     function contattaAdmin() { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); }
-    function eseguiInvio() { const nome = document.getElementById('nome-utente').value; const msg = document.getElementById('msg-utente').value; const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`; if (tipoSelezionato === 'wa') window.open(`https://wa.me/${negozioData.whatsapp || '41764458866'}?text=${encodeURIComponent(ticket)}`); else window.location.href = `mailto:${negozioData.email}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`; toggleCart(); tornaIndietro(); }
+    
+    // QUI FETCH: conteggio solo all'invio definitivo
+    function eseguiInvio() { 
+        fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); 
+        const nome = document.getElementById('nome-utente').value; 
+        const msg = document.getElementById('msg-utente').value; 
+        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`; 
+        if (tipoSelezionato === 'wa') window.open(`https://wa.me/${negozioData.whatsapp || '41764458866'}?text=${encodeURIComponent(ticket)}`); 
+        else window.location.href = `mailto:${negozioData.email}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`; 
+        toggleCart(); 
+        tornaIndietro(); 
+    }
+    
     function tornaIndietro() { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); }
 </script>
 </body>
