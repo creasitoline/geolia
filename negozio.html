@@ -12,8 +12,8 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .card { background: white; width: 100%; margin: 0; border-radius: 0; }
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
-        .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; }
+        .logo-container img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         .content { padding: 20px; }
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
@@ -55,40 +55,48 @@
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
 
         async function caricaDati() {
-            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
-            if (docSnap.exists()) {
-                const d = docSnap.data();
-                
-                document.getElementById('nome').innerText = d.nome || "";
-                document.getElementById('descrizione').innerText = d.descrizione || "";
-                document.getElementById('indirizzo').innerText = d.indirizzo || "";
-                document.getElementById('orari').innerText = d.orari || "";
-                
-                // Caricamento Immagini con controllo errore
-                const logoImg = document.getElementById('logo');
-                if(d.logo) {
-                    logoImg.src = d.logo;
-                    logoImg.onerror = () => { logoImg.style.display = 'none'; }; // Nasconde se non carica
-                }
-                
-                if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
-                
-                // Logica Aperto/Chiuso
-                if(d.orari) {
-                    const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
-                    const now = new Date().getHours() * 100 + new Date().getMinutes();
-                    const isOpen = now >= ap && now < chi;
-                    document.getElementById('stato-box').innerHTML = isOpen ? 
-                        '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
-                }
+            try {
+                const docSnap = await getDoc(doc(db, "negozi", idNegozio));
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    
+                    document.getElementById('nome').innerText = d.nome || "Negozio";
+                    document.getElementById('descrizione').innerText = d.descrizione || "";
+                    document.getElementById('indirizzo').innerText = d.indirizzo || "";
+                    document.getElementById('orari').innerText = d.orari || "";
+                    
+                    // Caricamento Logo
+                    const logoImg = document.getElementById('logo');
+                    if(d.logo) {
+                        logoImg.src = d.logo;
+                    } else {
+                        logoImg.style.display = 'none';
+                    }
+                    
+                    // Caricamento Copertina
+                    if(d.copertina) {
+                        document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
+                    }
+                    
+                    // Logica Aperto/Chiuso
+                    if(d.orari) {
+                        const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
+                        const now = new Date().getHours() * 100 + new Date().getMinutes();
+                        const isOpen = now >= ap && now < chi;
+                        document.getElementById('stato-box').innerHTML = isOpen ? 
+                            '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                    }
 
-                // Inserimento Schema
-                if(d.schema) {
-                    document.getElementById('json-ld').innerHTML = d.schema;
+                    // Inserimento Schema
+                    if(d.schema) {
+                        document.getElementById('json-ld').innerHTML = d.schema;
+                    }
+                    
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('main-content').style.opacity = '1';
                 }
-                
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-content').style.opacity = '1';
+            } catch (e) {
+                console.error("Errore nel caricamento:", e);
             }
         }
         caricaDati();
