@@ -37,8 +37,14 @@
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
                 <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
             </div>
+            
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
             <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
+            
+            <div id="mappa-container" style="margin-top:20px; display:none;">
+                <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen></iframe>
+                <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
+            </div>
         </div>
     </div>
 
@@ -73,7 +79,7 @@
             if (dati.limite > 0 && dati.count >= dati.limite) {
                 document.getElementById('btn-contatta').style.display = "none";
                 document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Non perdere le prossime richieste dei tuoi clienti. Passa al piano Premium per sbloccare contatti illimitati e far crescere la tua attività.";
+                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Non perdere le prossime richieste. Passa al piano Premium per sbloccare contatti illimitati.";
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0}`;
             }
@@ -90,13 +96,21 @@
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 
+                // Mappa
+                if (d.mappa) {
+                    document.getElementById('mappa-container').style.display = "block";
+                    document.getElementById('iframe-mappa').src = d.mappa;
+                }
+                
                 const now = new Date();
                 const currentTime = now.getHours() * 100 + now.getMinutes();
                 let aperto = false;
-                d.orari.split(',').forEach(fascia => {
-                    const [ap, chi] = fascia.split('-').map(t => parseInt(t.replace(':', '')));
-                    if (currentTime >= ap && currentTime < chi) aperto = true;
-                });
+                if(d.orari) {
+                    d.orari.split(',').forEach(fascia => {
+                        const [ap, chi] = fascia.split('-').map(t => parseInt(t.replace(':', '')));
+                        if (currentTime >= ap && currentTime < chi) aperto = true;
+                    });
+                }
                 document.getElementById('stato-box').innerHTML = aperto ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
                 aggiornaStatoUI(window.d);
@@ -104,6 +118,11 @@
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
+
+        window.apriNavigazione = () => {
+            const indirizzo = encodeURIComponent(window.d.indirizzo);
+            window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
+        };
 
         window.incrementaClick = async () => { 
             await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) });
