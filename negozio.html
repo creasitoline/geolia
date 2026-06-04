@@ -65,14 +65,16 @@
                 document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 document.getElementById('orari').innerText = d.orari;
                 
-                // Logica Aperto/Chiuso (basata su orari nel formato 08:00-23:00)
+                // Logica Aperto/Chiuso
                 const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
                 const now = new Date().getHours() * 100 + new Date().getMinutes();
                 const isOpen = now >= ap && now < chi;
                 document.getElementById('stato-box').innerHTML = isOpen ? 
                     '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
-                document.getElementById('json-ld').innerHTML = JSON.stringify(d.schema);
+                // INSERIMENTO SCHEMA PULITO
+                document.getElementById('json-ld').innerHTML = d.schema;
+                
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
