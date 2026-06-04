@@ -2,41 +2,62 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>GeoLiA Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoLiA | Home</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .filter-btn { margin: 5px; padding: 10px; cursor: pointer; }
-        .neg-link { display: block; padding: 15px; border-bottom: 1px solid #eee; text-decoration: none; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; padding-bottom: 80px; }
+        h1 { text-align: center; color: #333; }
+        
+        /* Filtri */
+        #filtri { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; justify-content: center; }
+        .filter-btn { padding: 10px 20px; border: none; border-radius: 20px; background: #007bff; color: white; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .filter-btn:hover { background: #0056b3; }
+        
+        /* Griglia Negozi */
+        .lista-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .neg-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .neg-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .neg-card a { text-decoration: none; color: #007bff; font-weight: bold; font-size: 1.2em; display: block; }
+        .neg-card p { color: #666; margin: 10px 0 0 0; font-size: 0.85em; background: #eee; padding: 5px 10px; border-radius: 10px; display: inline-block; }
     </style>
 </head>
 <body>
-    <h1>Negozi GeoLiA</h1>
+
+    <h1>GeoLiA</h1>
     <div id="filtri"></div>
-    <div id="lista-negozi"></div>
+    <div id="lista-negozi" class="lista-container"></div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcn7w4nx3q7Ccu9VCQmQKDofGkI1KGmibiAa3IHiXWXnczAXRr8MHx2yEy7VIznsjP/exec";
 
+        // Caricamento dati
         fetch(SCRIPT_URL)
             .then(r => r.json())
             .then(data => {
-                // Crea i filtri
-                let cats = [...new Set(data.map(n => n.cat))];
+                // Crea bottone "Tutti" + Categorie
+                let cats = ["Tutti", ...new Set(data.map(n => n.cat))];
                 document.getElementById('filtri').innerHTML = cats.map(c => 
                     `<button class="filter-btn" onclick="filtra('${c}')">${c}</button>`).join('');
+                
                 render(data);
+                window.datiCompleti = data; // Salviamo i dati per filtrare senza ri-chiamare il server
             });
 
         function render(data) {
             document.getElementById('lista-negozi').innerHTML = data.map(n => 
-                `<a class="neg-link" href="${n.id}.html">${n.nome}</a>`).join('');
+                `<div class="neg-card">
+                    <a href="${n.id}.html">${n.nome}</a>
+                    <p>${n.cat}</p>
+                </div>`).join('');
         }
 
         function filtra(cat) {
-            fetch(SCRIPT_URL).then(r => r.json()).then(data => {
-                let filtrati = data.filter(n => n.cat === cat);
+            if (cat === 'Tutti') {
+                render(window.datiCompleti);
+            } else {
+                let filtrati = window.datiCompleti.filter(n => n.cat === cat);
                 render(filtrati);
-            });
+            }
         }
     </script>
 </body>
