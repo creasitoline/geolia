@@ -5,18 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">GeoLiA</title>
     <meta name="description" id="meta-desc" content="Hub di ricerca locale GeoLiA.zone">
-    <!-- Questo sarà riempito dallo script per la SEO -->
     <script id="jsonld-placeholder" type="application/ld+json"></script>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         .card { background: white; width: 100%; margin: 0; border-radius: 0; box-shadow: none; position: relative; }
-        .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
+        .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; background-repeat: no-repeat; }
         .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; }
-        .logo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .content { padding: 20px; }
-        .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
+        .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; font-size: 15px; }
+        .info-box p { margin: 8px 0; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
-        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; display: none; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; }
+        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
+        @media (min-width: 768px) { #cart-panel { width: 500px; left: 50%; transform: translateX(-50%); } }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .hidden { display: none; }
+        #status-limit { font-size: 13px; color: #666; text-align: center; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -30,10 +34,10 @@
         <div class="info-box">
             <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
             <p><strong>🕒 Orari:</strong> <span id="orari">...</span></p>
-            <p><strong>Stato:</strong> <span id="stato-box">Verifica...</span></p>
+            <p><strong>Stato:</strong> <span id="stato-box">Verifica in corso...</span></p>
         </div>
         <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
-        <p id="status-limit" style="text-align:center; font-size: 13px;"></p>
+        <p id="status-limit"></p>
         <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
     </div>
 </div>
@@ -46,51 +50,101 @@
         <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
         <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
     </div>
-    <div id="modulo-invio" style="display:none;">
+    <div id="modulo-invio" class="hidden">
         <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-        <input type="text" id="nome-utente" style="width:100%; padding:10px; margin-bottom:10px;" placeholder="Il tuo Nome">
-        <textarea id="msg-utente" style="width:100%; padding:10px; margin-bottom:10px;" placeholder="Messaggio..."></textarea>
+        <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
+        <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
+        <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
         <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
         <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
     </div>
 </div>
 
 <script>
-    // --- MODIFICA SOLO QUESTA RIGA PER OGNI NUOVO FILE ---
-    const idNegozio = "NOME_ID_NEGOZIO"; 
-    // -----------------------------------------------------
-    
+    const idNegozio = new URLSearchParams(window.location.search).get('id');
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZmUbNFE-oeeZgJvX43M3PtnCiB4jMUYlN2xTO4KjgZlHk4yeXP-SKDiYF2xfSjNK-/exec";
-    
+    let negozioData = {};
+    let tipoSelezionato = '';
+
     fetch(`${SCRIPT_URL}?id=${idNegozio}`)
         .then(r => r.json())
         .then(data => {
+            negozioData = data;
             document.getElementById('nome').innerText = data.nome;
             document.getElementById('descrizione').innerText = data.descrizione;
+            
             document.getElementById('page-title').innerText = `${data.nome} | GeoLiA.zone`;
+            document.getElementById('meta-desc').setAttribute('content', `${data.descrizione} - Scopri di più su ${data.nome} tramite GeoLiA.zone, il tuo hub di ricerca locale.`);
+
             document.getElementById('cover').style.backgroundImage = `url('${data.copertina}')`;
             document.getElementById('logo').src = data.logo;
-            document.getElementById('indirizzo').innerText = data.indirizzo;
-            document.getElementById('orari').innerText = `Mattina: ${data.apMattina}-${data.chiuMattina} | Pom: ${data.apPomeriggio}-${data.chiuSera}`;
-            
-            // Inserimento dinamico JSON-LD
-            if (data.jsonLd) document.getElementById('jsonld-placeholder').textContent = data.jsonLd;
+            document.getElementById('indirizzo').innerText = data.indirizzo || "Non specificato";
+            document.getElementById('orari').innerText = `Mattina: ${data.apMattina} - ${data.chiuMattina} | Pomeriggio: ${data.apPomeriggio} - ${data.chiuSera}`;
+
+            // Aggiornamento del JSON-LD esistente
+            if (data.jsonLd) {
+                const jsonLdTag = document.getElementById('jsonld-placeholder');
+                jsonLdTag.textContent = data.jsonLd;
+            }
 
             if (data.limite > 0 && data.count >= data.limite) {
-                document.getElementById('btn-contatta').style.display = "none";
-                document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b>";
+                document.getElementById('btn-contatta').innerText = "LIMITE RAGGIUNTO";
+                document.getElementById('btn-contatta').style.backgroundColor = "#ccc";
+                document.getElementById('btn-contatta').onclick = null;
+                document.getElementById('status-limit').innerHTML = "<b>Sei il titolare di questo profilo?</b><br>Limite contatti raggiunto.";
                 document.getElementById('btn-premium').style.display = "block";
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${data.count || 0} / ${data.limite || 0}`;
             }
+
+            const now = new Date();
+            const time = now.getHours() * 60 + now.getMinutes();
+            const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
+            const isOpen = (time >= toMin(data.apMattina) && time < toMin(data.chiuMattina)) || (time >= toMin(data.apPomeriggio) && time < toMin(data.chiuSera));
+            document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">●</span> Aperto' : '<span style="color:#dc3545">●</span> Chiuso';
         });
 
     function toggleCart() {
-        const p = document.getElementById('cart-panel');
-        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+        const panel = document.getElementById('cart-panel');
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
     }
-    
-    // Aggiungi qui le altre funzioni registraEApri, azioneDiretta, ecc.
+
+    function registraEApri(tipo) {
+        fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`);
+        tipoSelezionato = tipo;
+        document.getElementById('menu-scelta').classList.add('hidden');
+        document.getElementById('modulo-invio').classList.remove('hidden');
+        document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email';
+    }
+
+    function azioneDiretta(tipo) {
+        if(tipo === 'tel') {
+            fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`);
+            window.location.href = `tel:${negozioData.telefono || '41764458866'}`;
+        }
+        toggleCart();
+    }
+
+    function contattaAdmin() {
+        const msg = `Ciao, sono il titolare del profilo ${negozioData.nome || ''}. Vorrei passare al piano a pagamento Premium.`;
+        window.open(`https://wa.me/41764458866?text=${encodeURIComponent(msg)}`);
+    }
+
+    function eseguiInvio() {
+        const nome = document.getElementById('nome-utente').value;
+        const msg = document.getElementById('msg-utente').value;
+        const ticket = `*RICHIESTA DA GEOLIA*\nNome: ${nome}\nMessaggio: ${msg}`;
+        const numeroWa = negozioData.whatsapp || "41764458866";
+        if (tipoSelezionato === 'wa') window.open(`https://wa.me/${numeroWa}?text=${encodeURIComponent(ticket)}`);
+        else window.location.href = `mailto:${negozioData.email || ''}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`;
+        toggleCart();
+        tornaIndietro();
+    }
+
+    function tornaIndietro() {
+        document.getElementById('menu-scelta').classList.remove('hidden');
+        document.getElementById('modulo-invio').classList.add('hidden');
+    }
 </script>
 </body>
 </html>
