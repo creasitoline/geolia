@@ -58,22 +58,30 @@
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
                 const d = docSnap.data();
-                document.getElementById('nome').innerText = d.nome;
-                document.getElementById('descrizione').innerText = d.descrizione;
-                document.getElementById('indirizzo').innerText = d.indirizzo;
-                document.getElementById('logo').src = d.logo;
-                document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
-                document.getElementById('orari').innerText = d.orari;
+                
+                // Testi base
+                document.getElementById('nome').innerText = d.nome || "";
+                document.getElementById('descrizione').innerText = d.descrizione || "";
+                document.getElementById('indirizzo').innerText = d.indirizzo || "";
+                document.getElementById('orari').innerText = d.orari || "";
+                
+                // Caricamento Immagini robusto
+                if(d.logo) document.getElementById('logo').src = d.logo;
+                if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 
                 // Logica Aperto/Chiuso
-                const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
-                const now = new Date().getHours() * 100 + new Date().getMinutes();
-                const isOpen = now >= ap && now < chi;
-                document.getElementById('stato-box').innerHTML = isOpen ? 
-                    '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                if(d.orari) {
+                    const [ap, chi] = d.orari.split('-').map(t => parseInt(t.replace(':', '')));
+                    const now = new Date().getHours() * 100 + new Date().getMinutes();
+                    const isOpen = now >= ap && now < chi;
+                    document.getElementById('stato-box').innerHTML = isOpen ? 
+                        '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                }
 
-                // INSERIMENTO SCHEMA PULITO
-                document.getElementById('json-ld').innerHTML = d.schema;
+                // Inserimento Schema
+                if(d.schema) {
+                    document.getElementById('json-ld').innerHTML = d.schema;
+                }
                 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
