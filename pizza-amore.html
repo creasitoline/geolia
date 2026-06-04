@@ -43,7 +43,6 @@
     </script>
     
     <style>
-        /* ... (il tuo CSS resta invariato) ... */
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         .card { background: white; width: 100%; margin: 0; border-radius: 0; position: relative; }
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
@@ -58,7 +57,31 @@
     </style>
 </head>
 <body>
-    <script>
+
+<div class="card">
+    <div id="cover" class="cover"></div>
+    <div class="logo-container"><img id="logo" src="" alt="Logo"></div>
+    <div class="content">
+        <h1 id="nome">Caricamento...</h1>
+        <p id="descrizione"></p>
+        <div class="info-box">
+            <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
+            <p><strong>🕒 Orari:</strong> <span id="orari">...</span></p>
+            <p><strong>Stato:</strong> <span id="stato-box">Verifica in corso...</span></p>
+        </div>
+        <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+    </div>
+</div>
+
+<div id="cart-panel">
+    <div id="menu-scelta">
+        <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+        <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+        <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+    </div>
+</div>
+
+<script>
     const idNegozio = "pizza_amore"; 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbKZi155BNGtFXQwLVrP9HgqteBwbSBICXI8s6IQJHs5240F3AIKEt9fBxyfQgGiJQ/exec";
     
@@ -72,7 +95,6 @@
             document.getElementById('indirizzo').innerText = data.indirizzo || "N/D";
             document.getElementById('orari').innerText = `${data.apMattina}-${data.chiuMattina} | ${data.apPomeriggio}-${data.chiuSera}`;
             
-            // Logica stato (Aperto/Chiuso)
             const now = new Date();
             const time = now.getHours() * 60 + now.getMinutes();
             const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
@@ -80,7 +102,8 @@
             document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
         });
 
-    // ... (tutte le altre tue funzioni rimangono invariate) ...
+    function toggleCart() { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; }
+    function registraEApri(tipo) { fetch(`${SCRIPT_URL}?id=${idNegozio}&action=click`); alert("Segnalato!"); toggleCart(); }
 </script>
 </body>
 </html>
