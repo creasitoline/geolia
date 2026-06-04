@@ -1,101 +1,124 @@
-// Il template che useremo nel tuo generatore
-var template = `<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>GeoLiA Admin Generator</title>
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 100px; margin: 10px 0; font-family: monospace; }
+        #output { height: 300px; background: #282c34; color: #61dafb; }
+    </style>
+</head>
+<body>
+
+    <script>
+        var password = prompt("Inserisci password:");
+        if (password !== "TUA_PASSWORD_SEGRETA") { // CAMBIA LA PASSWORD QUI
+            document.body.innerHTML = "<h1>Accesso negato</h1>";
+            window.stop();
+        }
+    </script>
+
+    <div class="box">
+        <h1>Generatore Negozi GeoLiA</h1>
+        <label>ID Negozio:</label><br>
+        <input type="text" id="idNegozio" placeholder="es: pizza_amore" style="width:100%; padding:8px;"><br><br>
+
+        <label>JSON-LD:</label>
+        <textarea id="jsonLd" placeholder='{"@context": "...", ...}'></textarea>
+
+        <button onclick="genera()" style="padding: 10px 20px; cursor:pointer;">Genera Codice Pronto</button>
+
+        <h3>Codice Generato:</h3>
+        <textarea id="output" readonly></textarea>
+    </div>
+
+    <textarea id="templateBase" style="display:none;">
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">GeoLiA</title>
-    <meta name="robots" content="index, follow">
     {{JSON_LD}}
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .spinner { width: 70px; height: 70px; border: 7px solid #f3f3f3; border-top: 7px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        .loader-text { font-size: 18px; color: #555; font-weight: bold; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .card { background: white; width: 100%; margin: 0; border-radius: 0; position: relative; }
+        .card { background: white; width: 100%; margin: 0; position: relative; }
         .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; }
         .logo-container { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .logo-container img { width: 100%; height: 100%; object-fit: cover; }
         .content { padding: 20px; }
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
-        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; padding: 25px; box-sizing: border-box; display: none; }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div id="loader"><div class="spinner"></div><div class="loader-text">Caricamento dati in corso...</div></div>
+    <div id="loader"><div class="spinner"></div><p>Caricamento dati in corso...</p></div>
     <div class="card" id="main-content" style="opacity: 0;">
         <div id="cover" class="cover"></div>
         <div class="logo-container"><img id="logo" src="" alt="Logo"></div>
         <div class="content">
-            <h1 id="nome">...</h1>
-            <p id="descrizione"></p>
-            <div class="info-box">
-                <p><strong>📍 Indirizzo:</strong> <span id="indirizzo">...</span></p>
-                <p><strong>🕒 Orari:</strong> <span id="orari">...</span></p>
-                <p><strong>Stato:</strong> <span id="stato-box">...</span></p>
-            </div>
+            <h1 id="nome">...</h1><p id="descrizione"></p>
+            <div class="info-box"><p>📍 Indirizzo: <span id="indirizzo">...</span></p><p>🕒 Orari: <span id="orari">...</span></p><p>Stato: <span id="stato-box">...</span></p></div>
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
             <p id="status-limit" style="font-size:13px; text-align:center;"></p>
             <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
         </div>
     </div>
     <div id="cart-panel">
-        <div id="menu-scelta">
-            <h3 style="margin-top:0">Come vuoi contattarci?</h3>
-            <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
-            <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
-            <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
-            <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
-        </div>
-        <div id="modulo-invio" class="hidden">
-            <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
-            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono">
-            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
-            <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
-            <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
-        </div>
+        <div id="menu-scelta"><h3>Come vuoi contattarci?</h3><button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button><button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button><button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button><button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button></div>
+        <div id="modulo-invio" class="hidden"><h3 id="titolo-modulo">Invia Richiesta</h3><input type="text" id="nome-utente" class="user-input" placeholder="Nome"><input type="tel" id="tel-utente" class="user-input" placeholder="Telefono"><textarea id="msg-utente" class="user-input" placeholder="Messaggio"></textarea><button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button><button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button></div>
     </div>
     <script>
-        const idNegozio = "{{ID_NEGOZIO}}"; 
+        const idNegozio = "{{ID_NEGOZIO}}";
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPndDKkmPmSCglXTnRJaOcdGKYXOQMsxhm6a8XzI6mFrBTM8EKq92AGKuY-tFjdM_R/exec";
         let negozioData = {}, tipoSelezionato = '';
-        fetch(\`\${SCRIPT_URL}?id=\${idNegozio}\`)
+        fetch(SCRIPT_URL + "?id=" + idNegozio)
             .then(r => r.json())
             .then(data => {
                 negozioData = data;
                 document.getElementById('nome').innerText = data.nome;
                 document.getElementById('descrizione').innerText = data.descrizione;
-                document.getElementById('page-title').innerText = \`\${data.nome} | GeoLiA.zone\`;
-                document.getElementById('cover').style.backgroundImage = \`url('\${data.copertina}')\`;
+                document.getElementById('page-title').innerText = data.nome + " | GeoLiA.zone";
+                document.getElementById('cover').style.backgroundImage = "url('" + data.copertina + "')";
                 document.getElementById('logo').src = data.logo;
                 document.getElementById('indirizzo').innerText = data.indirizzo || "N/D";
-                document.getElementById('orari').innerText = \`\${data.apMattina}-\${data.chiuMattina} | \${data.apPomeriggio}-\${data.chiuSera}\`;
-                if (data.limite > 0 && data.count >= data.limite) {
-                    document.getElementById('btn-contatta').style.display = "none";
-                    document.getElementById('btn-premium').style.display = "block";
-                    document.getElementById('status-limit').innerHTML = "<b>Limite contatti raggiunto.</b>";
-                } else {
-                    document.getElementById('status-limit').innerText = \`Accessi: \${data.count || 0} / \${data.limite || 0}\`;
-                }
-                const now = new Date();
-                const time = now.getHours() * 60 + now.getMinutes();
-                const toMin = (t) => { if (!t || !t.includes(':')) return -1; const [h, m] = t.split(':'); return h * 60 + m * 1; };
-                const isOpen = (time >= toMin(data.apMattina) && time < toMin(data.chiuMattina)) || (time >= toMin(data.apPomeriggio) && time < toMin(data.chiuSera));
-                document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-content').style.opacity = '1';
+                document.getElementById('orari').innerText = data.apMattina + "-" + data.chiuMattina + " | " + data.apPomeriggio + "-" + data.chiuSera;
+                if (data.limite > 0 && data.count >= data.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = "<b>Limite raggiunto.</b>"; } else { document.getElementById('status-limit').innerText = "Accessi: " + (data.count || 0) + " / " + (data.limite || 0); }
+                var now = new Date(); var time = now.getHours() * 60 + now.getMinutes(); var toMin = function(t){ if(!t || !t.includes(':')) return -1; var s = t.split(':'); return parseInt(s[0])*60 + parseInt(s[1]); }; var isOpen = (time >= toMin(data.apMattina) && time < toMin(data.chiuMattina)) || (time >= toMin(data.apPomeriggio) && time < toMin(data.chiuSera)); document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                document.getElementById('loader').style.display = 'none'; document.getElementById('main-content').style.opacity = '1';
             });
-        function toggleCart() { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; }
-        function registraEApri(tipo) { tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; }
-        function azioneDiretta(tipo) { fetch(\`\${SCRIPT_URL}?id=\${idNegozio}&action=click\`); window.location.href = \`tel:\${negozioData.telefono || '41764458866'}\`; toggleCart(); }
-        function contattaAdmin() { window.open(\`https://wa.me/41764458866?text=\${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}\`); }
-        function eseguiInvio() { fetch(\`\${SCRIPT_URL}?id=\${idNegozio}&action=click\`); const nome = document.getElementById('nome-utente').value; const msg = document.getElementById('msg-utente').value; const ticket = \`*RICHIESTA DA GEOLIA*\nNome: \${nome}\nMessaggio: \${msg}\`; if (tipoSelezionato === 'wa') window.open(\`https://wa.me/\${negozioData.whatsapp || '41764458866'}?text=\${encodeURIComponent(ticket)}\`); else window.location.href = \`mailto:\${negozioData.email}?subject=Richiesta da \${nome}&body=\${encodeURIComponent(ticket)}\`; toggleCart(); tornaIndietro(); }
+        function toggleCart() { var p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; }
+        function registraEApri(tipo) { tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'WhatsApp' : 'Email'; }
+        function azioneDiretta(tipo) { fetch(SCRIPT_URL + "?id=" + idNegozio + "&action=click"); window.location.href = "tel:" + (negozioData.telefono || '41764458866'); toggleCart(); }
+        function contattaAdmin() { window.open("https://wa.me/41764458866?text=" + encodeURIComponent('Premium per: ' + idNegozio)); }
+        function eseguiInvio() { fetch(SCRIPT_URL + "?id=" + idNegozio + "&action=click"); var nome = document.getElementById('nome-utente').value; var msg = document.getElementById('msg-utente').value; var ticket = "*RICHIESTA*\nNome: " + nome + "\nMessaggio: " + msg; if (tipoSelezionato === 'wa') window.open("https://wa.me/" + (negozioData.whatsapp || '41764458866') + "?text=" + encodeURIComponent(ticket)); else window.location.href = "mailto:" + negozioData.email + "?subject=Richiesta da " + nome + "&body=" + encodeURIComponent(ticket); toggleCart(); tornaIndietro(); }
         function tornaIndietro() { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); }
     </script>
 </body>
-</html>`;
+</html>
+    </textarea>
+
+    <script>
+        function genera() {
+            var id = document.getElementById('idNegozio').value;
+            var json = document.getElementById('jsonLd').value;
+            var template = document.getElementById('templateBase').value;
+            
+            var codiceFinale = template
+                .replace('{{ID_NEGOZIO}}', id)
+                .replace('{{JSON_LD}}', json);
+            
+            document.getElementById('output').value = codiceFinale;
+        }
+    </script>
+</body>
+</html>
