@@ -2,85 +2,63 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>GeoLiA Admin Generator</title>
+    <title>GeoLiA Admin Generator PRO</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 120px; margin: 10px 0; border: 1px solid #ccc; font-family: monospace; }
-        #output { height: 250px; background: #333; color: #0f0; }
-        #login-box { text-align: center; padding-top: 50px; }
+        body { font-family: sans-serif; padding: 20px; background: #e9ecef; }
+        .box { background: white; padding: 20px; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 150px; margin: 10px 0; font-family: monospace; border: 1px solid #ccc; }
+        #output { height: 300px; background: #212529; color: #00ff00; }
+        .label { font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-box" class="box">
-        <h2>Area Riservata GeoLiA</h2>
-        <input type="password" id="pass-input" placeholder="Password" style="padding:10px;">
-        <button onclick="checkPass()" style="padding:10px 20px; cursor:pointer;">Accedi</button>
-        <p id="error-msg" style="color:red;"></p>
+        <h2>Area Riservata</h2>
+        <input type="password" id="pass-input" placeholder="Password">
+        <button onclick="checkPass()">Accedi</button>
     </div>
 
     <div id="app-content" class="box" style="display:none;">
         <h1>Generatore Negozi</h1>
-        <label>ID Negozio:</label><br>
-        <input type="text" id="idNegozio" placeholder="es: pizza_amore" style="width:100%; padding:8px;"><br><br>
-        <label>JSON-LD (incolla solo il blocco {}):</label>
-        <textarea id="jsonLd"></textarea>
-        <button onclick="genera()" style="padding:10px 20px; cursor:pointer; background:#007bff; color:white; border:none; border-radius:5px;">GENERA CODICE</button>
-        <h3>Risultato:</h3>
+        
+        <div class="label">1. Incolla qui il codice HTML base (il tuo "master"):</div>
+        <textarea id="htmlBase" placeholder="Incolla qui tutto il codice di pizza-amore.html..."></textarea>
+
+        <div class="label">2. ID Negozio:</div>
+        <input type="text" id="idNegozio" placeholder="es: arte_pizza" style="width:100%; padding:8px;">
+
+        <div class="label">3. Codice JSON-LD (senza tag script):</div>
+        <textarea id="jsonLd" placeholder='{"@context": ...}'></textarea>
+
+        <button onclick="genera()" style="padding:15px; background:green; color:white; border:none; width:100%; cursor:pointer; font-size:18px;">GENERA CODICE COMPLETO</button>
+
+        <h3>Risultato (Copia questo per il nuovo file):</h3>
         <textarea id="output" readonly></textarea>
     </div>
-
-    <textarea id="template" style="display:none;">
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoLiA</title>
-    <script type="application/ld+json">
-    {{JSON_LD}}
-    </script>
-    <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f4; }
-        .card { background: white; width: 100%; padding: 20px; box-sizing: border-box; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:white; display:flex; justify-content:center; align-items:center; }
-    </style>
-</head>
-<body>
-    <div id="loader">Caricamento in corso...</div>
-    <div class="card" id="main" style="display:none;">
-        <h1 id="nome">...</h1>
-        <button onclick="window.location.reload()">Ricarica</button>
-    </div>
-    <script>
-        fetch("https://script.google.com/macros/s/AKfycbyPndDKkmPmSCglXTnRJaOcdGKYXOQMsxhm6a8XzI6mFrBTM8EKq92AGKuY-tFjdM_R/exec?id={{ID_NEGOZIO}}")
-        .then(r => r.json()).then(data => {
-            document.getElementById('nome').innerText = data.nome;
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('main').style.display = 'block';
-        });
-    </script>
-</body>
-</html>
-    </textarea>
 
     <script>
         function checkPass() {
             if (document.getElementById('pass-input').value === "1970") {
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('app-content').style.display = 'block';
-            } else {
-                document.getElementById('error-msg').innerText = "Password errata!";
-            }
+            } else { alert("Password errata"); }
         }
 
         function genera() {
-            var temp = document.getElementById('template').value;
+            var html = document.getElementById('htmlBase').value;
             var id = document.getElementById('idNegozio').value;
             var json = document.getElementById('jsonLd').value;
-            var res = temp.replace('{{ID_NEGOZIO}}', id).replace('{{JSON_LD}}', json);
-            document.getElementById('output').value = res;
+
+            // 1. Sostituisce l'ID nel fetch
+            // Cerchiamo la stringa specifica del fetch nel tuo codice
+            var codiceConId = html.replace(/id=[^"']+/g, "id=" + id);
+
+            // 2. Inserisce il JSON-LD dopo il <head>
+            var jsonTag = '<script type="application/ld+json">\n' + json + '\n<\/script>';
+            var codiceFinale = codiceConId.replace('<head>', '<head>\n' + jsonTag);
+
+            document.getElementById('output').value = codiceFinale;
         }
     </script>
 </body>
