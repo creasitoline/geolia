@@ -17,7 +17,6 @@
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         
-        /* Stili per il pannello contatti */
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
         .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
@@ -52,8 +51,9 @@
         </div>
         <div id="modulo-invio" class="hidden">
             <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome">
-            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..."></textarea>
+            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome" required>
+            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono" required>
+            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..." required></textarea>
             <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
             <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
         </div>
@@ -75,7 +75,6 @@
         const db = getFirestore(initializeApp(firebaseConfig));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
         
-        // Variabili globali per i contatti
         window.d = {}; 
         window.tipoSelezionato = '';
 
@@ -84,12 +83,10 @@
                 const docSnap = await getDoc(doc(db, "negozi", idNegozio));
                 if (docSnap.exists()) {
                     window.d = docSnap.data();
-                    
                     document.getElementById('nome').innerText = d.nome || "Negozio";
                     document.getElementById('descrizione').innerText = d.descrizione || "";
                     document.getElementById('indirizzo').innerText = d.indirizzo || "";
                     document.getElementById('orari').innerText = d.orari || "";
-                    
                     if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                     if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                     
@@ -99,21 +96,21 @@
                         document.getElementById('stato-box').innerHTML = (now >= ap && now < chi) ? 
                             '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
                     }
-
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-content').style.opacity = '1';
                 }
             } catch (e) { console.error(e); }
         }
 
-        // Funzioni esportate su window per essere richiamabili dai bottoni
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
         window.registraEApri = (tipo) => { window.tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
         window.azioneDiretta = (tipo) => { window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
         window.eseguiInvio = () => { 
-            const nome = document.getElementById('nome-utente').value; 
-            const msg = document.getElementById('msg-utente').value; 
-            const ticket = `*Richiesta da GeoLiA*\nNome: ${nome}\nMessaggio: ${msg}`; 
+            const nome = document.getElementById('nome-utente').value;
+            const tel = document.getElementById('tel-utente').value;
+            const msg = document.getElementById('msg-utente').value;
+            if(!nome || !tel || !msg) { alert("Compila tutti i campi!"); return; }
+            const ticket = `*Richiesta da GeoLiA*\nNome: ${nome}\nTelefono: ${tel}\nMessaggio: ${msg}`; 
             if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(ticket)}`); 
             else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${nome}&body=${encodeURIComponent(ticket)}`; 
             window.toggleCart(); window.tornaIndietro(); 
