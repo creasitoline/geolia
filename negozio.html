@@ -59,14 +59,18 @@
             if (docSnap.exists()) {
                 const d = docSnap.data();
                 
-                // Testi base
                 document.getElementById('nome').innerText = d.nome || "";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
                 document.getElementById('orari').innerText = d.orari || "";
                 
-                // Caricamento Immagini robusto
-                if(d.logo) document.getElementById('logo').src = d.logo;
+                // Caricamento Immagini con controllo errore
+                const logoImg = document.getElementById('logo');
+                if(d.logo) {
+                    logoImg.src = d.logo;
+                    logoImg.onerror = () => { logoImg.style.display = 'none'; }; // Nasconde se non carica
+                }
+                
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 
                 // Logica Aperto/Chiuso
