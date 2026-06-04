@@ -1,64 +1,29 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoLiA | Home</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; padding-bottom: 80px; }
-        h1 { text-align: center; color: #333; }
-        
-        /* Filtri */
-        #filtri { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; justify-content: center; }
-        .filter-btn { padding: 10px 20px; border: none; border-radius: 20px; background: #007bff; color: white; cursor: pointer; font-weight: bold; white-space: nowrap; }
-        .filter-btn:hover { background: #0056b3; }
-        
-        /* Griglia Negozi */
-        .lista-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .neg-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .neg-card:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-        .neg-card a { text-decoration: none; color: #007bff; font-weight: bold; font-size: 1.2em; display: block; }
-        .neg-card p { color: #666; margin: 10px 0 0 0; font-size: 0.85em; background: #eee; padding: 5px 10px; border-radius: 10px; display: inline-block; }
-    </style>
-</head>
-<body>
+<style>
+    /* Stile "Moderno" ispirato a ShopyGO */
+    body { font-family: 'Segoe UI', sans-serif; background: #f3f3f3; margin: 0; padding-bottom: 90px; }
+    .main-layout { max-width: 1200px; margin: auto; padding: 15px; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    
+    .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+    .card img { width: 100%; height: 160px; object-fit: cover; }
+    
+    .info { padding: 10px; }
+    .info h4 { font-size: 0.9rem; margin: 0 0 10px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .price { font-weight: bold; color: #131921; font-size: 1.1rem; }
+    
+    .btn-vai { display: block; background: #FFD814; text-align: center; padding: 8px; border-radius: 6px; text-decoration: none; color: #000; font-weight: bold; font-size: 0.8rem; margin-top: 10px; border: 1px solid #f0c14b; }
+    
+    /* Menu fisso in basso (come ShopyGO) */
+    .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 15px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); border-radius: 20px 20px 0 0; }
+</style>
 
-    <h1>GeoLiA</h1>
-    <div id="filtri"></div>
-    <div id="lista-negozi" class="lista-container"></div>
+<div class="main-layout">
+    <div id="lista-negozi" class="grid"></div>
+</div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcn7w4nx3q7Ccu9VCQmQKDofGkI1KGmibiAa3IHiXWXnczAXRr8MHx2yEy7VIznsjP/exec";
-
-        // Caricamento dati
-        fetch(SCRIPT_URL)
-            .then(r => r.json())
-            .then(data => {
-                // Crea bottone "Tutti" + Categorie
-                let cats = ["Tutti", ...new Set(data.map(n => n.cat))];
-                document.getElementById('filtri').innerHTML = cats.map(c => 
-                    `<button class="filter-btn" onclick="filtra('${c}')">${c}</button>`).join('');
-                
-                render(data);
-                window.datiCompleti = data; // Salviamo i dati per filtrare senza ri-chiamare il server
-            });
-
-        function render(data) {
-            document.getElementById('lista-negozi').innerHTML = data.map(n => 
-                `<div class="neg-card">
-                    <a href="${n.id}.html">${n.nome}</a>
-                    <p>${n.cat}</p>
-                </div>`).join('');
-        }
-
-        function filtra(cat) {
-            if (cat === 'Tutti') {
-                render(window.datiCompleti);
-            } else {
-                let filtrati = window.datiCompleti.filter(n => n.cat === cat);
-                render(filtrati);
-            }
-        }
-    </script>
-</body>
-</html>
+<nav class="nav-bottom">
+    <a href="index.html" class="nav-item">🏠 Home</a>
+    <a href="#" class="nav-item">🔍 Cerca</a>
+    <a href="#" class="nav-item">👤 Staff</a>
+</nav>
