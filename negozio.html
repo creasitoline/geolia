@@ -120,7 +120,7 @@
 
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
-            // Corretto il template literal
+            // Corretto: aggiunto il simbolo $ per il corretto funzionamento del link
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
         };
 
