@@ -44,9 +44,10 @@
 
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        /* Loader stile */
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Loader stile ottimizzato */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 70px; height: 70px; border: 7px solid #f3f3f3; border-top: 7px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .loader-text { font-size: 18px; color: #555; font-weight: bold; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .card { background: white; width: 100%; margin: 0; border-radius: 0; position: relative; }
@@ -63,7 +64,10 @@
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div></div>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Caricamento dati in corso...</div>
+    </div>
 
 <div class="card" id="main-content" style="opacity: 0;">
     <div id="cover" class="cover"></div>
@@ -131,7 +135,6 @@
             const isOpen = (time >= toMin(data.apMattina) && time < toMin(data.chiuMattina)) || (time >= toMin(data.apPomeriggio) && time < toMin(data.chiuSera));
             document.getElementById('stato-box').innerHTML = isOpen ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
             
-            // Rimuovi loader e mostra contenuto
             document.getElementById('loader').style.display = 'none';
             document.getElementById('main-content').style.opacity = '1';
         });
