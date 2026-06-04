@@ -94,7 +94,7 @@
                 if (d.limite > 0 && d.count >= d.limite) {
                     document.getElementById('btn-contatta').style.display = "none";
                     document.getElementById('btn-premium').style.display = "block";
-                    document.getElementById('status-limit').innerHTML = "Limite contatti raggiunto.";
+                    document.getElementById('status-limit').innerHTML = "Limite contatti raggiunto, sei il proprietario di questo profilo?.";
                 } else {
                     document.getElementById('status-limit').innerText = `Accessi: ${d.count || 0} / ${d.limite || 0}`;
                 }
