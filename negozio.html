@@ -79,7 +79,7 @@
             if (dati.limite > 0 && dati.count >= dati.limite) {
                 document.getElementById('btn-contatta').style.display = "none";
                 document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Non perdere le prossime richieste. Passa al piano Premium per sbloccare contatti illimitati.";
+                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Passa al piano Premium per sbloccare contatti illimitati.";
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0}`;
             }
@@ -120,6 +120,7 @@
 
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
+            // Corretto il template literal
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
         };
 
