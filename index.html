@@ -10,15 +10,16 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; }
         
         /* Header */
-        header { background: white; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; }
+        header { background: white; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; font-size: 1.2rem; }
         
         /* Griglia */
         .main-layout { padding: 15px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-        .card { background: white; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card img { width: 100%; height: 140px; object-fit: cover; }
+        .card { background: white; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 140px; object-fit: cover; background-color: #eee; }
         .info { padding: 10px; }
-        .info h4 { font-size: 0.9rem; margin: 0 0 5px 0; }
+        .info h4 { font-size: 0.9rem; margin: 0 0 5px 0; color: #333; }
         .btn-vai { display: block; background: var(--accent); text-align: center; padding: 8px; border-radius: 6px; text-decoration: none; color: #000; font-weight: bold; font-size: 0.8rem; margin-top: 10px; }
 
         /* Nav Bottom */
@@ -42,21 +43,26 @@
     </nav>
 
     <script>
-        const SCRIPT_URL = "INSERISCI_QUI_IL_TUO_URL_SCRIPT";
+        // INSERISCI QUI IL TUO URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxcn7w4nx3q7Ccu9VCQmQKDofGkI1KGmibiAa3IHiXWXnczAXRr8MHx2yEy7VIznsjP/exec";
 
         fetch(SCRIPT_URL)
             .then(r => r.json())
             .then(data => {
                 const container = document.getElementById('lista-negozi');
+                // Se la colonna copertina è vuota, usa un placeholder grigio
                 container.innerHTML = data.map(n => `
                     <div class="card">
-                        <img src="${n.copertina || 'https://via.placeholder.com/150'}">
+                        <img src="${n.copertina || 'https://via.placeholder.com/150/e0e0e0/555?text=GeoLiA'}">
                         <div class="info">
                             <h4>${n.nome}</h4>
                             <a href="${n.id}.html" class="btn-vai">VEDI NEGOZIO</a>
                         </div>
                     </div>
                 `).join('');
+            })
+            .catch(err => {
+                document.getElementById('lista-negozi').innerHTML = "<p style='text-align:center;'>Errore nel caricamento negozi.</p>";
             });
     </script>
 </body>
