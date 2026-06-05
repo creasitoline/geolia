@@ -21,6 +21,15 @@
         .user-input.error { border: 2px solid #dc3545; }
         .hidden { display: none; }
         #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        /* Ottimizzazione Slider */
+        #slider-vetrina {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            cursor: grab;
+            user-select: none;
+        }
+        #slider-vetrina::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -48,8 +57,8 @@
             
             <div id="vetrina-container" style="margin-top: 30px; display: none;">
                 <h2 style="font-size: 20px; color: #333; margin-bottom: 10px;">Vetrina</h2>
-                <div id="slider-vetrina" style="display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none;">
-                </div>
+                <div id="slider-vetrina" style="display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px;">
+                    </div>
             </div>
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
@@ -98,7 +107,6 @@
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
                 
-                // Vetrina dinamica con object-fit: contain per mostrare l'intera immagine
                 const slider = document.getElementById('slider-vetrina');
                 const containerVetrina = document.getElementById('vetrina-container');
                 if (dati.vetrina && Array.isArray(dati.vetrina) && dati.vetrina.length > 0) {
