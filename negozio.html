@@ -1,77 +1,4 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">GeoLiA</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .card { background: white; width: 100%; margin: 0; border-radius: 0; }
-        .cover { width: 100%; height: 35vh; background-size: cover; background-position: center; background-color: #ddd; }
-        .logo-box { position: relative; margin-top: -60px; margin-left: 20px; width: 120px; height: 120px; border: 4px solid white; border-radius: 15px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 10; background-size: cover; background-position: center; }
-        .content { padding: 20px; }
-        .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
-        .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
-        #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
-        .user-input.error { border: 2px solid #dc3545; }
-        .hidden { display: none; }
-        #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    </style>
-</head>
-<body>
-
-    <div id="loader"><div class="spinner"></div></div>
-    <div id="popup-voto">Grazie del voto! ⭐</div>
-
-    <div class="card" id="main-content" style="opacity: 0;">
-        <div id="cover" class="cover"></div>
-        <div id="logo-box" class="logo-box"></div>
-        <div class="content">
-            <h1 id="nome">...</h1>
-            <p id="descrizione"></p>
-            <div class="info-box">
-                <p><strong>📍 Indirizzo:</strong> <span id="indirizzo"></span></p>
-                <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
-                <p><strong>Stato:</strong> <span id="stato-box"></span></p>
-                <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
-                <p><strong>Recensioni:</strong> <span id="media-stelle">0</span>/5 ⭐ (<span id="totale-voti">0</span> voti)</p>
-                <p><strong>Totale punti:</strong> <span id="totale-punti">0</span></p>
-            </div>
-            
-            <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
-            <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
-            
-            <div id="mappa-container" style="margin-top:20px; display:none;">
-                <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
-                <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cart-panel">
-        <div id="menu-scelta">
-            <h3 style="margin-top:0">Come vuoi contattarci?</h3>
-            <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
-            <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
-            <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
-            <button class="btn" style="background:#ffc107; color:black;" onclick="vota(5)">Vota 5 Stelle ⭐</button>
-            <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
-        </div>
-        <div id="modulo-invio" class="hidden">
-            <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
-            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome" oninput="this.classList.remove('error')">
-            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono" oninput="this.classList.remove('error')">
-            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..." oninput="this.classList.remove('error')"></textarea>
-            <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
-            <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
-        </div>
-    </div>
-
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -80,64 +7,19 @@
         
         window.d = {}; window.tipoSelezionato = '';
 
-        function aggiornaSchemaSEO(media, conteggio) {
-            let script = document.getElementById('json-ld-schema');
-            if (!script) {
-                script = document.createElement('script');
-                script.id = 'json-ld-schema';
-                script.type = 'application/ld+json';
-                document.head.appendChild(script);
-            }
-            script.textContent = JSON.stringify({
-                "@context": "https://schema.org/",
-                "@type": "LocalBusiness",
-                "name": document.getElementById('nome').innerText,
-                "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
-            });
-        }
-
-        async function controllaReset(dati) {
-            const now = new Date();
-            const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-            if (now >= dataReset) {
-                const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() });
-                dati.count = 0; dati.prossimoReset = nuovaData.toISOString();
-            }
-            return dati;
-        }
-
-        function aggiornaStatoUI(dati) {
-            const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT');
-            if (dati.limite > 0 && dati.count >= dati.limite) {
-                document.getElementById('btn-contatta').style.display = "none";
-                document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`;
-            } else {
-                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`;
-            }
-        }
-
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
-                let dati = await controllaReset(docSnap.data());
-                window.d = dati;
-                document.getElementById('nome').innerText = d.nome || "Negozio";
-                document.getElementById('descrizione').innerText = d.descrizione || "";
-                document.getElementById('indirizzo').innerText = d.indirizzo || "";
-                document.getElementById('orari').innerText = d.orari ? d.orari.replace(',', ' | ') : "";
-                
-                const somma = d.votiSomma || 0;
-                const conteggio = d.votiConteggio || 0;
-                const media = conteggio > 0 ? (somma / conteggio) : 0;
-                document.getElementById('media-stelle').innerText = media.toFixed(1);
-                document.getElementById('totale-voti').innerText = conteggio;
-                document.getElementById('totale-punti').innerText = somma;
-                
-                aggiornaSchemaSEO(media, conteggio);
+                let d = await controllaReset(docSnap.data());
+                window.d = d;
 
-                // Logica Stato Aperto/Chiuso
+                // 1. GESTIONE SEO: Prende il JSON puro dal database e lo inietta nel tag
+                const script = document.getElementById('json-ld-schema');
+                if (script && d.schema) {
+                    script.textContent = d.schema;
+                }
+
+                // 2. GESTIONE STATO APERTO/CHIUSO
                 const now = new Date();
                 const cur = now.getHours() * 100 + now.getMinutes();
                 let ap = false;
@@ -153,49 +35,43 @@
                 }
                 document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
+                // 3. UI E ACCESSI
+                document.getElementById('nome').innerText = d.nome || "Negozio";
+                document.getElementById('descrizione').innerText = d.descrizione || "";
+                document.getElementById('indirizzo').innerText = d.indirizzo || "";
+                document.getElementById('orari').innerText = d.orari ? d.orari.replace(',', ' | ') : "";
+                
+                const somma = d.votiSomma || 0;
+                const conteggio = d.votiConteggio || 0;
+                const media = conteggio > 0 ? (somma / conteggio) : 0;
+                document.getElementById('media-stelle').innerText = media.toFixed(1);
+                document.getElementById('totale-voti').innerText = conteggio;
+                document.getElementById('totale-punti').innerText = somma;
+
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 if (d.mappa) {
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
+                
                 aggiornaStatoUI(d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        window.vota = async (voto) => {
-            await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) });
-            toggleCart();
-            const p = document.getElementById('popup-voto');
-            p.style.display = 'block';
-            setTimeout(() => { p.style.display = 'none'; }, 2000);
-            caricaDati();
-        };
-
+        async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
+        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
+        window.vota = async (voto) => { await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
-        window.incrementaClick = async () => { 
-            await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) });
-            const s = await getDoc(doc(db, "negozi", idNegozio));
-            window.d = s.data();
-            aggiornaStatoUI(window.d);
-        };
+        window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
         window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
         window.azioneDiretta = async (t) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
-        window.eseguiInvio = async () => { 
-            const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente');
-            if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; }
-            await incrementaClick();
-            const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; 
-            if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(tk)}`); 
-            else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; 
-            window.toggleCart(); window.tornaIndietro(); 
-        };
+        window.eseguiInvio = async () => { const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente'); if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; } await incrementaClick(); const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
         window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
         window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
+        
         caricaDati();
     </script>
-</body>
-</html>
