@@ -77,16 +77,15 @@
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
-        const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
+        
+        // MODIFICA 1: L'ID ora è quello lungo che hai creato
+        const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
         
         window.d = {}; window.tipoSelezionato = '';
 
-        // FUNZIONE CORRETTA: Prende il JSON salvato nel campo 'schema' di Firebase e lo inietta
         function applicaSchemaDaDatabase(schemaString) {
             const script = document.getElementById('json-ld-schema');
-            if (script && schemaString) {
-                script.textContent = schemaString;
-            }
+            if (script && schemaString) { script.textContent = schemaString; }
         }
 
         async function controllaReset(dati) {
@@ -94,7 +93,8 @@
             const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
             if (now >= dataReset) {
                 const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() });
+                // MODIFICA 2: Puntiamo alla collezione "shop"
+                await updateDoc(doc(db, "shop", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() });
                 dati.count = 0; dati.prossimoReset = nuovaData.toISOString();
             }
             return dati;
@@ -112,34 +112,28 @@
         }
 
         async function caricaDati() {
-            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
+            // MODIFICA 3: Puntiamo alla collezione "shop"
+            const docSnap = await getDoc(doc(db, "shop", idNegozio));
             if (docSnap.exists()) {
                 let dati = await controllaReset(docSnap.data());
                 window.d = dati;
-                
-                // --- INSERIMENTO JSON SEO DAL DATABASE ---
                 applicaSchemaDaDatabase(dati.schema);
-                // ------------------------------------------
-
                 document.getElementById('nome').innerText = dati.nome || "Negozio";
                 document.getElementById('descrizione').innerText = dati.descrizione || "";
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
-                
                 const somma = dati.votiSomma || 0;
                 const conteggio = dati.votiConteggio || 0;
                 const media = conteggio > 0 ? (somma / conteggio) : 0;
                 document.getElementById('media-stelle').innerText = media.toFixed(1);
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
-
                 if(dati.logo) document.getElementById('logo-box').style.backgroundImage = `url('${dati.logo}')`;
                 if(dati.copertina) document.getElementById('cover').style.backgroundImage = `url('${dati.copertina}')`;
                 if (dati.mappa) {
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = dati.mappa;
                 }
-                
                 const now = new Date();
                 const cur = now.getHours() * 100 + now.getMinutes();
                 let ap = false;
@@ -150,16 +144,17 @@
                     });
                 }
                 document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
-                
                 aggiornaStatoUI(dati);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        window.vota = async (voto) => { await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
+        // MODIFICA 4: Anche qui puntiamo alla collezione "shop" per voti e click
+        window.vota = async (voto) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
-        window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
+        window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "shop", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
+        
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
         window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
         window.azioneDiretta = async (t) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
