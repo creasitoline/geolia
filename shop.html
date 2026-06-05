@@ -49,7 +49,7 @@
             <div id="vetrina-container" style="margin-top: 30px; display: none;">
                 <h2 style="font-size: 20px; color: #333; margin-bottom: 10px;">Vetrina</h2>
                 <div id="slider-vetrina" style="display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none;">
-                    </div>
+                </div>
             </div>
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
@@ -98,13 +98,13 @@
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
                 
-                // Vetrina dinamica
+                // Vetrina dinamica con object-fit: contain per mostrare l'intera immagine
                 const slider = document.getElementById('slider-vetrina');
                 const containerVetrina = document.getElementById('vetrina-container');
                 if (dati.vetrina && Array.isArray(dati.vetrina) && dati.vetrina.length > 0) {
                     containerVetrina.style.display = "block";
                     slider.innerHTML = dati.vetrina.map(imgUrl => `
-                        <img src="${imgUrl}" style="width: 200px; height: 150px; object-fit: cover; border-radius: 12px; flex-shrink: 0;">
+                        <img src="${imgUrl}" style="width: 200px; height: 150px; object-fit: contain; background-color: #f8f8f8; border: 1px solid #eee; border-radius: 12px; flex-shrink: 0;">
                     `).join('');
                 }
 
