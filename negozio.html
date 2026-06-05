@@ -40,6 +40,7 @@
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
                 <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
                 <p><strong>Recensioni:</strong> <span id="media-stelle">0</span>/5 ⭐ (<span id="totale-voti">0</span> voti)</p>
+                <p><strong>Totale punti:</strong> <span id="totale-punti">0</span></p>
             </div>
             
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
@@ -142,6 +143,7 @@
                 const media = conteggio > 0 ? (somma / conteggio) : 0;
                 document.getElementById('media-stelle').innerText = media.toFixed(1);
                 document.getElementById('totale-voti').innerText = conteggio;
+                document.getElementById('totale-punti').innerText = somma;
                 aggiornaSchemaSEO(media, conteggio);
 
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
