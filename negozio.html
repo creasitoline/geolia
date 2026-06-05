@@ -80,11 +80,18 @@
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
         
-        window.d = {};
+        window.d = {}; window.tipoSelezionato = '';
 
-        function applicaSchema(schemaJson) {
-            const script = document.getElementById('json-ld-schema');
-            if (script && schemaJson) { script.textContent = schemaJson; }
+        function aggiornaSchemaSEO(media, conteggio) {
+            let script = document.getElementById('json-ld-schema');
+            if (script) {
+                script.textContent = JSON.stringify({
+                    "@context": "https://schema.org/",
+                    "@type": "LocalBusiness",
+                    "name": document.getElementById('nome').innerText,
+                    "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
+                });
+            }
         }
 
         async function caricaDati() {
@@ -92,28 +99,10 @@
             if (docSnap.exists()) {
                 let d = await controllaReset(docSnap.data());
                 window.d = d;
-                applicaSchema(d.schema);
-
                 document.getElementById('nome').innerText = d.nome || "Negozio";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
                 document.getElementById('orari').innerText = d.orari ? d.orari.replace(',', ' | ') : "";
-                
-                // LOGICA STATO: Aperto/Chiuso basata su orari database
-                const now = new Date();
-                const cur = now.getHours() * 100 + now.getMinutes();
-                let ap = false;
-                if(d.orari) {
-                    d.orari.split(',').forEach(f => {
-                        const parti = f.split('-');
-                        if(parti.length === 2) {
-                            const s = parseInt(parti[0].replace(':', ''));
-                            const e = parseInt(parti[1].replace(':', ''));
-                            if (cur >= s && cur < e) ap = true;
-                        }
-                    });
-                }
-                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745; font-weight:bold;">● Aperto</span>' : '<span style="color:#dc3545; font-weight:bold;">● Chiuso</span>';
                 
                 const somma = d.votiSomma || 0;
                 const conteggio = d.votiConteggio || 0;
@@ -121,6 +110,24 @@
                 document.getElementById('media-stelle').innerText = media.toFixed(1);
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
+                
+                aggiornaSchemaSEO(media, conteggio);
+
+                // RIPRISTINO LOGICA ORARIO
+                const now = new Date();
+                const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false;
+                if(d.orari) {
+                    d.orari.split(',').forEach(f => {
+                        const parts = f.split('-');
+                        if(parts.length === 2) {
+                            const s = parseInt(parts[0].replace(':', ''));
+                            const e = parseInt(parts[1].replace(':', ''));
+                            if (cur >= s && cur < e) ap = true;
+                        }
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
@@ -128,25 +135,14 @@
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
-
                 aggiornaStatoUI(d);
-                
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
         async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
-        function aggiornaStatoUI(dati) { 
-            const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); 
-            if (dati.limite > 0 && dati.count >= dati.limite) { 
-                document.getElementById('btn-contatta').style.display = "none"; 
-                document.getElementById('btn-premium').style.display = "block"; 
-                document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; 
-            } else { 
-                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; 
-            } 
-        }
+        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
         window.vota = async (voto) => { await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
