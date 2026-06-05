@@ -17,17 +17,18 @@
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
+        .user-input.error { border: 2px solid #dc3545; }
         .hidden { display: none; }
         #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-
-        /* Stili Slider */
-        .slider-wrapper { position: relative; width: 100%; margin: 20px 0; overflow: hidden; }
-        .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 10px; padding: 10px 0; -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Modifiche Slider */
+        .slider-wrapper { position: relative; width: 100%; margin: 20px 0; }
+        .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
         .slider-container::-webkit-scrollbar { display: none; }
-        .slider-container img { height: 250px; width: auto; object-fit: contain; border-radius: 12px; border: 1px solid #eee; background: #fff; }
-        .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 15px 10px; cursor: pointer; border-radius: 5px; z-index: 10; font-size: 20px; }
-        .prev { left: 0; } .next { right: 0; }
+        .slider-container img { height: 250px; width: auto; object-fit: contain; background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; }
+        .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.4); color: white; border: none; padding: 15px 10px; cursor: pointer; z-index: 5; border-radius: 5px; }
+        .prev { left: 5px; } .next { right: 5px; }
     </style>
 </head>
 <body>
@@ -46,13 +47,14 @@
                 <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
                 <p><strong>Recensioni:</strong> <span id="media-stelle">0</span>/5 ⭐ (<span id="totale-voti">0</span> voti)</p>
+                <p><strong>Totale punti:</strong> <span id="totale-punti">0</span></p>
                 <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
             </div>
 
-            <div id="vetrina-section" class="slider-wrapper hidden">
-                <button class="nav-btn prev" onclick="scrollSlider(-300)">❮</button>
-                <div id="slider-container" class="slider-container"></div>
-                <button class="nav-btn next" onclick="scrollSlider(300)">❯</button>
+            <div id="vetrina-area" class="slider-wrapper hidden">
+                <button class="nav-btn prev" onclick="scrollSlider(-250)">❮</button>
+                <div id="slider-vetrina" class="slider-container"></div>
+                <button class="nav-btn next" onclick="scrollSlider(250)">❯</button>
             </div>
             
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
@@ -65,43 +67,90 @@
         </div>
     </div>
 
-    <div id="cart-panel"></div>
+    <div id="cart-panel">
+        <div id="menu-scelta">
+            <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+            <button id="btn-wa-menu" class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+            <button id="btn-email-menu" class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
+            <button id="btn-tel-menu" class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
+            <button id="btn-web-menu" class="btn" style="background:#0056b3" onclick="azioneDiretta('web')">Sito Web 🌐</button>
+            <button class="btn" style="background:#ffc107; color:black;" onclick="vota(5)">Vota 5 Stelle ⭐</button>
+            <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+        </div>
+        <div id="modulo-invio" class="hidden">
+            <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome" oninput="this.classList.remove('error')">
+            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono" oninput="this.classList.remove('error')">
+            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..." oninput="this.classList.remove('error')"></textarea>
+            <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+            <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIGURAZIONE
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
-        window.d = {};
+        window.d = {}; window.tipoSelezionato = '';
 
-        // LOGICA SLIDER
-        window.scrollSlider = (val) => {
-            document.getElementById('slider-container').scrollBy({ left: val, behavior: 'smooth' });
+        // Funzione per muovere lo slider
+        window.scrollSlider = (offset) => {
+            document.getElementById('slider-vetrina').scrollBy({ left: offset, behavior: 'smooth' });
         };
+
+        // ... (Mantieni le tue funzioni: applicaSchemaDaDatabase, controllaReset, aggiornaStatoUI) ...
+        function applicaSchemaDaDatabase(schemaString) { const script = document.getElementById('json-ld-schema'); if (script && schemaString) { script.textContent = schemaString; } }
+        async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "shop", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
+        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
 
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "shop", idNegozio));
             if (docSnap.exists()) {
-                const dati = docSnap.data();
+                let dati = await controllaReset(docSnap.data());
                 window.d = dati;
                 
-                // Popola slider se esiste l'array 'vetrina' nel database
-                if (dati.vetrina && Array.isArray(dati.vetrina) && dati.vetrina.length > 0) {
-                    const container = document.getElementById('slider-container');
-                    container.innerHTML = dati.vetrina.map(imgUrl => `<img src="${imgUrl}">`).join('');
-                    document.getElementById('vetrina-section').classList.remove('hidden');
+                // Caricamento Vetrina Slider
+                if (dati.vetrina && Array.isArray(dati.vetrina)) {
+                    const cont = document.getElementById('slider-vetrina');
+                    cont.innerHTML = dati.vetrina.map(url => `<img src="${url}">`).join('');
+                    document.getElementById('vetrina-area').classList.remove('hidden');
                 }
 
-                // ... Il resto della tua logica di caricamento originale ...
+                // ... (Resto della logica originale di caricaDati) ...
+                applicaSchemaDaDatabase(dati.schema);
                 document.getElementById('nome').innerText = dati.nome || "Negozio";
+                document.getElementById('descrizione').innerText = dati.descrizione || "";
+                document.getElementById('indirizzo').innerText = dati.indirizzo || "";
+                document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
+                const somma = dati.votiSomma || 0; const conteggio = dati.votiConteggio || 0;
+                document.getElementById('media-stelle').innerText = (conteggio > 0 ? (somma / conteggio) : 0).toFixed(1);
+                document.getElementById('totale-voti').innerText = conteggio;
+                document.getElementById('totale-punti').innerText = somma;
+                if(dati.logo) document.getElementById('logo-box').style.backgroundImage = `url('${dati.logo}')`;
+                if(dati.copertina) document.getElementById('cover').style.backgroundImage = `url('${dati.copertina}')`;
+                if(dati.mappa) { document.getElementById('mappa-container').style.display = "block"; document.getElementById('iframe-mappa').src = dati.mappa; }
+                const now = new Date(); const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false; if(dati.orari) { dati.orari.split(',').forEach(f => { const [s, e] = f.split('-').map(t => parseInt(t.replace(':', ''))); if (cur >= s && cur < e) ap = true; }); }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                aggiornaStatoUI(dati);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        // Mantieni tutte le tue funzioni originali sotto (vota, toggleCart, ecc.)
+        // ... (Tutte le altre funzioni window.vota, window.toggleCart, ecc. rimangono invariate) ...
+        window.vota = async (voto) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
+        window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
+        window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "shop", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
+        window.toggleCart = () => { const p = document.getElementById('cart-panel'); if (p.style.display !== 'block') { document.getElementById('btn-wa-menu').style.display = (window.d.whatsapp && window.d.whatsapp.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-email-menu').style.display = (window.d.email && window.d.email.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-tel-menu').style.display = (window.d.telefono && window.d.telefono.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-web-menu').style.display = (window.d.sitoWeb && window.d.sitoWeb.trim() !== "") ? 'block' : 'none'; p.style.display = 'block'; } else { p.style.display = 'none'; } };
+        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
+        window.azioneDiretta = async (t) => { await incrementaClick(); if (t === 'tel') { window.location.href = `tel:${window.d.telefono || ''}`; } else if (t === 'web') { if (window.d.sitoWeb) window.open(window.d.sitoWeb, '_blank'); else alert("Sito web non configurato"); } window.toggleCart(); };
+        window.eseguiInvio = async () => { const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente'); if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; } await incrementaClick(); const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || ''}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
+        window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
+        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
+        
         caricaDati();
     </script>
 </body>
