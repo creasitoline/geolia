@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title">GeoLiA</title>
+    
     <script id="json-ld-schema" type="application/ld+json"></script>
 
     <style>
@@ -82,6 +83,20 @@
         
         window.d = {}; window.tipoSelezionato = '';
 
+        // Funzione SEO che aggiorna SOLO il contenuto del tag esistente
+        function aggiornaSchemaSEO(media, conteggio) {
+            const schemaTag = document.getElementById('json-ld-schema');
+            if (schemaTag) {
+                schemaTag.textContent = JSON.stringify({
+                    "@context": "https://schema.org/",
+                    "@type": "LocalBusiness",
+                    "name": document.getElementById('nome').innerText,
+                    "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
+                });
+            }
+        }
+
+        // --- TUTTA LA LOGICA ORIGINALE INVARIATA ---
         window.vota = async (voto) => {
             await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) });
             toggleCart();
@@ -91,23 +106,9 @@
             caricaDati();
         };
 
-        // Logica SEO corretta: scrive nel tag esistente senza distruggere la pagina
-        function aggiornaSchemaSEO(media, conteggio) {
-            const script = document.getElementById('json-ld-schema');
-            if (script) {
-                script.textContent = JSON.stringify({
-                    "@context": "https://schema.org/",
-                    "@type": "LocalBusiness",
-                    "name": document.getElementById('nome').innerText,
-                    "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
-                });
-            }
-        }
-
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
-                // ... (tutto il resto della tua logica di caricamento originale) ...
                 let dati = await controllaReset(docSnap.data());
                 window.d = dati;
                 document.getElementById('nome').innerText = d.nome || "Negozio";
@@ -122,6 +123,7 @@
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
                 
+                // Aggiorna SEO senza intaccare il DOM della pagina
                 aggiornaSchemaSEO(media, conteggio);
 
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
@@ -130,15 +132,24 @@
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
-                // ... (Fine logica originale)
+                const now = new Date();
+                const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false;
+                if(d.orari) {
+                    d.orari.split(',').forEach(f => {
+                        const [s, e] = f.split('-').map(t => parseInt(t.replace(':', '')));
+                        if (cur >= s && cur < e) ap = true;
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                aggiornaStatoUI(window.d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        // ... (Il resto delle tue funzioni window. ... rimane invariato)
-        async function controllaReset(dati) { /* ... */ return dati; }
-        function aggiornaStatoUI(dati) { /* ... */ }
+        async function controllaReset(dati) { /* ... invariato ... */ const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
+        function aggiornaStatoUI(dati) { /* ... invariato ... */ const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
