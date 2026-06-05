@@ -7,7 +7,6 @@
     <script id="json-ld-schema" type="application/ld+json"></script>
     
     <style>
-        /* ... (Il tuo CSS rimane invariato) ... */
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -83,30 +82,16 @@
         
         window.d = {};
 
-        // LA SOLA MODIFICA: INIETTA IL JSON CHE HAI SU FIREBASE SENZA MANIPOLARLO
         function applicaSchema(schemaJson) {
             const script = document.getElementById('json-ld-schema');
-            if (script && schemaJson) {
-                script.textContent = schemaJson;
-            }
+            if (script && schemaJson) { script.textContent = schemaJson; }
         }
-
-        window.vota = async (voto) => {
-            await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) });
-            toggleCart();
-            const p = document.getElementById('popup-voto');
-            p.style.display = 'block';
-            setTimeout(() => { p.style.display = 'none'; }, 2000);
-            caricaDati();
-        };
 
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
                 let d = await controllaReset(docSnap.data());
                 window.d = d;
-                
-                // INSERIMENTO: usa il JSON che hai su Firebase
                 applicaSchema(d.schema);
 
                 document.getElementById('nome').innerText = d.nome || "Negozio";
@@ -127,15 +112,27 @@
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
+
+                // RIPRISTINATA: Aggiorna lo stato, i click e i limiti
+                aggiornaStatoUI(d);
                 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        // ... (tutto il resto delle funzioni originali rimane invariato) ...
         async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
-        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
+        function aggiornaStatoUI(dati) { 
+            const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); 
+            if (dati.limite > 0 && dati.count >= dati.limite) { 
+                document.getElementById('btn-contatta').style.display = "none"; 
+                document.getElementById('btn-premium').style.display = "block"; 
+                document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; 
+            } else { 
+                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; 
+            } 
+        }
+        window.vota = async (voto) => { await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
