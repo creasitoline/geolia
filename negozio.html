@@ -48,6 +48,24 @@
         </div>
     </div>
 
+    <div id="cart-panel">
+        <div id="menu-scelta">
+            <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+            <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+            <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
+            <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
+            <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+        </div>
+        <div id="modulo-invio" class="hidden">
+            <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome" oninput="this.classList.remove('error')">
+            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono" oninput="this.classList.remove('error')">
+            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..." oninput="this.classList.remove('error')"></textarea>
+            <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+            <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -59,37 +77,31 @@
 
         async function controllaReset(dati) {
             const now = new Date();
-            let dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
+            const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
             if (now >= dataReset) {
                 const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                await updateDoc(doc(db, "negozi", idNegozio), {
-                    count: 0,
-                    prossimoReset: nuovaData.toISOString()
-                });
-                dati.count = 0;
-                dati.prossimoReset = nuovaData.toISOString();
+                await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() });
+                dati.count = 0; dati.prossimoReset = nuovaData.toISOString();
             }
             return dati;
         }
 
         function aggiornaStatoUI(dati) {
-            const dataFormattata = new Date(dati.prossimoReset).toLocaleDateString('it-IT');
+            const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT');
             if (dati.limite > 0 && dati.count >= dati.limite) {
                 document.getElementById('btn-contatta').style.display = "none";
                 document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = `Limite raggiunto! Reset al ${dataFormattata}.`;
+                document.getElementById('status-limit').innerHTML = `Limite raggiunto! Reset al ${dataF}.`;
             } else {
-                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset al ${dataFormattata})`;
+                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`;
             }
         }
 
         async function caricaDati() {
-            let docSnap = await getDoc(doc(db, "negozi", idNegozio));
+            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
                 let dati = await controllaReset(docSnap.data());
                 window.d = dati;
-                
                 document.getElementById('nome').innerText = d.nome || "Negozio";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
@@ -100,9 +112,16 @@
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
-                
-                // ... (Logica orari rimane uguale)
-                
+                const now = new Date();
+                const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false;
+                if(d.orari) {
+                    d.orari.split(',').forEach(f => {
+                        const [s, e] = f.split('-').map(t => parseInt(t.replace(':', '')));
+                        if (cur >= s && cur < e) ap = true;
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
                 aggiornaStatoUI(window.d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
@@ -112,12 +131,24 @@
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { 
             await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) });
-            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
-            window.d = docSnap.data();
+            const s = await getDoc(doc(db, "negozi", idNegozio));
+            window.d = s.data();
             aggiornaStatoUI(window.d);
         };
-        // ... (resto funzioni toggleCart, registraEApri, ecc.)
-        
+        window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
+        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
+        window.azioneDiretta = async (t) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
+        window.eseguiInvio = async () => { 
+            const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente');
+            if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; }
+            await incrementaClick();
+            const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; 
+            if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(tk)}`); 
+            else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; 
+            window.toggleCart(); window.tornaIndietro(); 
+        };
+        window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
+        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
         caricaDati();
     </script>
 </body>
