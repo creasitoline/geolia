@@ -43,10 +43,7 @@
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
-                
-                <button class="btn" style="background: linear-gradient(135deg, #007bff, #0056b3); margin-top:10px; box-shadow: 0 4px 6px rgba(0,123,255,0.3);" onclick="apriNavigazione()">
-                    Ottieni Indicazioni 🗺️
-                </button>
+                <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
             </div>
         </div>
     </div>
@@ -121,7 +118,7 @@
             }
         }
 
-        // Funzione corretta con il $ necessario per il template literal
+        // FUNZIONE CORRETTA: aggiunto il simbolo $ per inserire correttamente l'indirizzo
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
