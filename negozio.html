@@ -19,7 +19,6 @@
         .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
         .user-input.error { border: 2px solid #dc3545; }
         .hidden { display: none; }
-        /* Popup personalizzato */
         #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     </style>
 </head>
@@ -90,7 +89,7 @@
             caricaDati();
         };
 
-        function aggiornaSchemaSEO(media, conteggio) {
+        function aggiornaSchemaSEO(schemaJson, media, conteggio) {
             let script = document.getElementById('json-ld-schema');
             if (!script) {
                 script = document.createElement('script');
@@ -98,12 +97,17 @@
                 script.type = 'application/ld+json';
                 document.head.appendChild(script);
             }
-            script.textContent = JSON.stringify({
-                "@context": "https://schema.org/",
-                "@type": "LocalBusiness",
-                "name": document.getElementById('nome').innerText,
-                "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
-            });
+            if (schemaJson) {
+                try {
+                    let schemaObj = JSON.parse(schemaJson);
+                    schemaObj.aggregateRating = {
+                        "@type": "AggregateRating",
+                        "ratingValue": media.toFixed(1),
+                        "reviewCount": conteggio
+                    };
+                    script.textContent = JSON.stringify(schemaObj);
+                } catch(e) { console.error("Errore schema JSON:", e); }
+            }
         }
 
         async function controllaReset(dati) {
@@ -141,10 +145,12 @@
                 const somma = d.votiSomma || 0;
                 const conteggio = d.votiConteggio || 0;
                 const media = conteggio > 0 ? (somma / conteggio) : 0;
+                
                 document.getElementById('media-stelle').innerText = media.toFixed(1);
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
-                aggiornaSchemaSEO(media, conteggio);
+                
+                aggiornaSchemaSEO(d.schema, media, conteggio);
 
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
