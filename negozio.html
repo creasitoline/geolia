@@ -9,12 +9,7 @@
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Caricamento...",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Paradiso",
-        "addressCountry": "CH"
-      }
+      "name": "Caricamento..."
     }
     </script>
 
@@ -71,7 +66,6 @@
             if (docSnap.exists()) {
                 const d = docSnap.data();
                 
-                // Aggiorna Interfaccia
                 document.getElementById('nome').innerText = d.nome || "Negozio";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
@@ -82,21 +76,22 @@
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
 
-                // Aggiorna JSON-LD per Google (Ottimizzato 100% SEO)
+                // LOGICA SCHEMA: Usa il campo 'schema' di Firebase se esiste, altrimenti genera quello base
                 const seo = document.getElementById('seo-data');
-                seo.innerText = JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@type": "Restaurant",
-                    "name": d.nome || "Negozio",
-                    "image": d.copertina || "",
-                    "priceRange": "€€",
-                    "telephone": d.telefono || "",
-                    "description": d.descrizione || "",
-                    "address": {
-                        "@type": "PostalAddress",
-                        "streetAddress": d.indirizzo || ""
-                    }
-                });
+                if (d.schema) {
+                    seo.innerText = d.schema;
+                } else {
+                    seo.innerText = JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Restaurant",
+                        "name": d.nome || "Negozio",
+                        "image": d.copertina || "",
+                        "priceRange": "€€",
+                        "telephone": d.telefono || "",
+                        "description": d.descrizione || "",
+                        "address": { "@type": "PostalAddress", "streetAddress": d.indirizzo || "" }
+                    });
+                }
 
                 window.d = d; 
                 document.getElementById('loader').style.display = 'none';
@@ -104,7 +99,6 @@
             }
         }
 
-        // CORREZIONE: Aggiunto il $ per la variabile
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
