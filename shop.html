@@ -101,11 +101,25 @@
                 document.getElementById('descrizione').innerText = dati.descrizione || "";
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
+                
+                // Logica Stato Aperto/Chiuso
+                const now = new Date();
+                const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false;
+                if(dati.orari) {
+                    dati.orari.split(',').forEach(f => {
+                        const [s, e] = f.split('-').map(t => parseInt(t.replace(':', '')));
+                        if (cur >= s && cur < e) ap = true;
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
+                
                 document.getElementById('media-stelle').innerText = (dati.votiConteggio > 0 ? (dati.votiSomma / dati.votiConteggio) : 0).toFixed(1);
                 document.getElementById('totale-voti').innerText = dati.votiConteggio || 0;
                 document.getElementById('totale-punti').innerText = dati.votiSomma || 0;
                 if(dati.logo) document.getElementById('logo-box').style.backgroundImage = `url('${dati.logo}')`;
                 if(dati.copertina) document.getElementById('cover').style.backgroundImage = `url('${dati.copertina}')`;
+                
                 aggiornaStatoUI(dati);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
@@ -115,10 +129,11 @@
         window.toggleCart = () => {
             const p = document.getElementById('cart-panel');
             if (p.style.display !== 'block') {
-                document.getElementById('btn-wa').style.display = window.d.whatsapp ? 'block' : 'none';
-                document.getElementById('btn-email').style.display = window.d.email ? 'block' : 'none';
-                document.getElementById('btn-tel').style.display = window.d.telefono ? 'block' : 'none';
-                document.getElementById('btn-web').style.display = window.d.sitoWeb ? 'block' : 'none';
+                // Controllo visibilità tasti
+                document.getElementById('btn-wa').style.display = (window.d.whatsapp && window.d.whatsapp.trim() !== "") ? 'block' : 'none';
+                document.getElementById('btn-email').style.display = (window.d.email && window.d.email.trim() !== "") ? 'block' : 'none';
+                document.getElementById('btn-tel').style.display = (window.d.telefono && window.d.telefono.trim() !== "") ? 'block' : 'none';
+                document.getElementById('btn-web').style.display = (window.d.sitoWeb && window.d.sitoWeb.trim() !== "") ? 'block' : 'none';
                 p.style.display = 'block';
             } else {
                 p.style.display = 'none';
@@ -127,9 +142,9 @@
 
         window.vota = async (voto) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); caricaDati(); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "shop", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
-        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); };
+        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
         window.azioneDiretta = async (t) => { await incrementaClick(); if (t === 'tel') window.location.href = `tel:${window.d.telefono}`; else if (t === 'web') window.open(window.d.sitoWeb, '_blank'); window.toggleCart(); };
-        window.eseguiInvio = async () => { await incrementaClick(); const tk = `Richiesta: ${document.getElementById('msg-utente').value}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
+        window.eseguiInvio = async () => { await incrementaClick(); const n = document.getElementById('nome-utente').value, t = document.getElementById('tel-utente').value, m = document.getElementById('msg-utente').value; const tk = `*Richiesta da GeoLiA*\nNome: ${n}\nTelefono: ${t}\nMessaggio: ${m}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n}&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
         window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
         
         caricaDati();
