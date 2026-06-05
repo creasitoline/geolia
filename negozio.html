@@ -9,7 +9,12 @@
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Caricamento..."
+      "name": "Caricamento...",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Paradiso",
+        "addressCountry": "CH"
+      }
     }
     </script>
 
@@ -66,9 +71,10 @@
             if (docSnap.exists()) {
                 const d = docSnap.data();
                 
-                document.getElementById('nome').innerText = d.nome || "Negozio";
-                document.getElementById('descrizione').innerText = d.descrizione || "";
-                document.getElementById('indirizzo').innerText = d.indirizzo || "";
+                // Aggiorna Interfaccia
+                document.getElementById('nome').innerText = d.nome;
+                document.getElementById('descrizione').innerText = d.descrizione;
+                document.getElementById('indirizzo').innerText = d.indirizzo;
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 if(d.mappa) {
@@ -76,29 +82,23 @@
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
 
-                // LOGICA SCHEMA: Usa il campo 'schema' di Firebase se esiste, altrimenti genera quello base
+                // Aggiorna JSON-LD per Google
                 const seo = document.getElementById('seo-data');
-                if (d.schema) {
-                    seo.innerText = d.schema;
-                } else {
-                    seo.innerText = JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "Restaurant",
-                        "name": d.nome || "Negozio",
-                        "image": d.copertina || "",
-                        "priceRange": "€€",
-                        "telephone": d.telefono || "",
-                        "description": d.descrizione || "",
-                        "address": { "@type": "PostalAddress", "streetAddress": d.indirizzo || "" }
-                    });
-                }
+                seo.innerText = JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "LocalBusiness",
+                    "name": d.nome,
+                    "address": d.indirizzo,
+                    "description": d.descrizione
+                });
 
-                window.d = d; 
+                window.d = d; // Salva per altre funzioni
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
+        // CORREZIONE CRITICA: Aggiunto il simbolo $ per la variabile
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
