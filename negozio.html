@@ -3,21 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeoLiA - Negozio</title>
-    
-    <script type="application/ld+json" id="seo-data">
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "Caricamento...",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Paradiso",
-        "addressCountry": "CH"
-      }
-    }
-    </script>
-
+    <title id="page-title">GeoLiA</title>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -30,7 +16,8 @@
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
+        .user-input.error { border: 2px solid #dc3545; }
         .hidden { display: none; }
     </style>
 </head>
@@ -48,61 +35,115 @@
                 <p><strong>📍 Indirizzo:</strong> <span id="indirizzo"></span></p>
                 <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
+                <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
             </div>
             
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
+            <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
-                <button class="btn" style="background: linear-gradient(135deg, #007bff, #0056b3); margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
+                <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
             </div>
+        </div>
+    </div>
+
+    <div id="cart-panel">
+        <div id="menu-scelta">
+            <h3 style="margin-top:0">Come vuoi contattarci?</h3>
+            <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
+            <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
+            <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
+            <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
+        </div>
+        <div id="modulo-invio" class="hidden">
+            <h3 id="titolo-modulo" style="margin-top:0">Invia Richiesta</h3>
+            <input type="text" id="nome-utente" class="user-input" placeholder="Il tuo Nome" oninput="this.classList.remove('error')">
+            <input type="tel" id="tel-utente" class="user-input" placeholder="Il tuo Telefono" oninput="this.classList.remove('error')">
+            <textarea id="msg-utente" class="user-input" placeholder="Scrivi il tuo messaggio..." oninput="this.classList.remove('error')"></textarea>
+            <button class="btn" style="background:#25D366" onclick="eseguiInvio()">Invia Ora 🚀</button>
+            <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
+        
+        window.d = {}; window.tipoSelezionato = '';
+
+        function aggiornaStatoUI(dati) {
+            if (dati.limite > 0 && dati.count >= dati.limite) {
+                document.getElementById('btn-contatta').style.display = "none";
+                document.getElementById('btn-premium').style.display = "block";
+                document.getElementById('status-limit').innerHTML = "Hai raggiunto il limite di contatti gratuiti! Passa al piano Premium per sbloccare contatti illimitati.";
+            } else {
+                document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0}`;
+            }
+        }
 
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
-                const d = docSnap.data();
-                
-                // Aggiorna Interfaccia
-                document.getElementById('nome').innerText = d.nome;
-                document.getElementById('descrizione').innerText = d.descrizione;
-                document.getElementById('indirizzo').innerText = d.indirizzo;
+                window.d = docSnap.data();
+                document.getElementById('nome').innerText = d.nome || "Negozio";
+                document.getElementById('descrizione').innerText = d.descrizione || "";
+                document.getElementById('indirizzo').innerText = d.indirizzo || "";
+                document.getElementById('orari').innerText = d.orari ? d.orari.replace(',', ' | ') : "";
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
-                if(d.mappa) {
+                
+                if (d.mappa) {
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
+                
+                const now = new Date();
+                const currentTime = now.getHours() * 100 + now.getMinutes();
+                let aperto = false;
+                if(d.orari) {
+                    d.orari.split(',').forEach(fascia => {
+                        const [ap, chi] = fascia.split('-').map(t => parseInt(t.replace(':', '')));
+                        if (currentTime >= ap && currentTime < chi) aperto = true;
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = aperto ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
 
-                // Aggiorna JSON-LD per Google
-                const seo = document.getElementById('seo-data');
-                seo.innerText = JSON.stringify({
-                    "@context": "https://schema.org",
-                    "@type": "LocalBusiness",
-                    "name": d.nome,
-                    "address": d.indirizzo,
-                    "description": d.descrizione
-                });
-
-                window.d = d; // Salva per altre funzioni
+                aggiornaStatoUI(window.d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        // CORREZIONE CRITICA: Aggiunto il simbolo $ per la variabile
+        // FUNZIONE CORRETTA: aggiunto il simbolo $ per inserire correttamente l'indirizzo
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
         };
+
+        window.incrementaClick = async () => { 
+            await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) });
+            const docSnap = await getDoc(doc(db, "negozi", idNegozio));
+            window.d = docSnap.data();
+            aggiornaStatoUI(window.d);
+        };
+        window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
+        window.registraEApri = (tipo) => { window.tipoSelezionato = tipo; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (tipo === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
+        window.azioneDiretta = async (tipo) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
+        window.eseguiInvio = async () => { 
+            const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente');
+            if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(el => !el.value.trim() ? el.classList.add('error') : null); return; }
+            await incrementaClick();
+            const ticket = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; 
+            if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(ticket)}`); 
+            else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(ticket)}`; 
+            window.toggleCart(); window.tornaIndietro(); 
+        };
+        window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
+        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
 
         caricaDati();
     </script>
