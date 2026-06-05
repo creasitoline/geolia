@@ -43,7 +43,10 @@
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
-                <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
+                
+                <button class="btn" style="background: linear-gradient(135deg, #007bff, #0056b3); margin-top:10px; box-shadow: 0 4px 6px rgba(0,123,255,0.3);" onclick="apriNavigazione()">
+                    Ottieni Indicazioni 🗺️
+                </button>
             </div>
         </div>
     </div>
@@ -118,7 +121,7 @@
             }
         }
 
-        // FUNZIONE CORRETTA: aggiunto il simbolo $ per inserire correttamente l'indirizzo
+        // Funzione corretta con il $ necessario per il template literal
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
@@ -143,9 +146,4 @@
             window.toggleCart(); window.tornaIndietro(); 
         };
         window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
-        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
-
-        caricaDati();
-    </script>
-</body>
-</html>
+        window.contattaAdmin = () => { window.open(`
