@@ -91,7 +91,7 @@
             if (dati.limite > 0 && dati.count >= dati.limite) {
                 document.getElementById('btn-contatta').style.display = "none";
                 document.getElementById('btn-premium').style.display = "block";
-                document.getElementById('status-limit').innerHTML = `Limite raggiunto! Reset al ${dataF}.`;
+                document.getElementById('status-limit').innerHTML = `Limite di ${dati.limite} raggiunto! Reset al ${dataF}.`;
             } else {
                 document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`;
             }
