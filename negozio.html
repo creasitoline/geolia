@@ -118,10 +118,10 @@
             }
         }
 
-        // FUNZIONE CORRETTA: il ${indirizzo} garantisce che venga passato l'indirizzo da Firebase
+        // FUNZIONE CORRETTA: aggiunto il simbolo $ per inserire correttamente l'indirizzo
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
-            window.open(`https://www.google.com/maps/search/?api=1&query=$${indirizzo}`, '_blank');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
         };
 
         window.incrementaClick = async () => { 
