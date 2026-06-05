@@ -59,6 +59,7 @@
             <button class="btn" style="background:#25D366" onclick="registraEApri('wa')">WhatsApp 💬</button>
             <button class="btn" style="background:#ea4335" onclick="registraEApri('email')">Email 📧</button>
             <button class="btn" style="background:#343a40" onclick="azioneDiretta('tel')">Telefono 📞</button>
+            <button class="btn" style="background:#0056b3" onclick="azioneDiretta('web')">Sito Web 🌐</button>
             <button class="btn" style="background:#ffc107; color:black;" onclick="vota(5)">Vota 5 Stelle ⭐</button>
             <button class="btn" style="background:#6c757d" onclick="toggleCart()">Chiudi</button>
         </div>
@@ -78,7 +79,6 @@
 
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         
-        // MODIFICA 1: L'ID ora è quello lungo che hai creato
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
         
         window.d = {}; window.tipoSelezionato = '';
@@ -93,7 +93,6 @@
             const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
             if (now >= dataReset) {
                 const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-                // MODIFICA 2: Puntiamo alla collezione "shop"
                 await updateDoc(doc(db, "shop", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() });
                 dati.count = 0; dati.prossimoReset = nuovaData.toISOString();
             }
@@ -112,7 +111,6 @@
         }
 
         async function caricaDati() {
-            // MODIFICA 3: Puntiamo alla collezione "shop"
             const docSnap = await getDoc(doc(db, "shop", idNegozio));
             if (docSnap.exists()) {
                 let dati = await controllaReset(docSnap.data());
@@ -122,18 +120,21 @@
                 document.getElementById('descrizione').innerText = dati.descrizione || "";
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
+                
                 const somma = dati.votiSomma || 0;
                 const conteggio = dati.votiConteggio || 0;
                 const media = conteggio > 0 ? (somma / conteggio) : 0;
                 document.getElementById('media-stelle').innerText = media.toFixed(1);
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
+                
                 if(dati.logo) document.getElementById('logo-box').style.backgroundImage = `url('${dati.logo}')`;
                 if(dati.copertina) document.getElementById('cover').style.backgroundImage = `url('${dati.copertina}')`;
                 if (dati.mappa) {
                     document.getElementById('mappa-container').style.display = "block";
                     document.getElementById('iframe-mappa').src = dati.mappa;
                 }
+                
                 const now = new Date();
                 const cur = now.getHours() * 100 + now.getMinutes();
                 let ap = false;
@@ -150,20 +151,30 @@
             }
         }
 
-        // MODIFICA 4: Anche qui puntiamo alla collezione "shop" per voti e click
         window.vota = async (voto) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "shop", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
         
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
         window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
-        window.azioneDiretta = async (t) => { await incrementaClick(); window.location.href = `tel:${window.d.telefono || '41764458866'}`; window.toggleCart(); };
+        
+        window.azioneDiretta = async (t) => { 
+            await incrementaClick(); 
+            if (t === 'tel') {
+                window.location.href = `tel:${window.d.telefono || ''}`;
+            } else if (t === 'web') {
+                if (window.d.sitoWeb) window.open(window.d.sitoWeb, '_blank');
+                else alert("Sito web non configurato");
+            }
+            window.toggleCart(); 
+        };
+
         window.eseguiInvio = async () => { 
             const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente');
             if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; }
             await incrementaClick();
             const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; 
-            if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || '41764458866'}?text=${encodeURIComponent(tk)}`); 
+            if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || ''}?text=${encodeURIComponent(tk)}`); 
             else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; 
             window.toggleCart(); window.tornaIndietro(); 
         };
