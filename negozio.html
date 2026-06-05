@@ -81,22 +81,24 @@
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "pizza-amore";
         
-        window.d = {}; window.tipoSelezionato = '';
+        window.d = {};
 
-        // Funzione SEO che aggiorna SOLO il contenuto del tag esistente
-        function aggiornaSchemaSEO(media, conteggio) {
-            const schemaTag = document.getElementById('json-ld-schema');
-            if (schemaTag) {
-                schemaTag.textContent = JSON.stringify({
-                    "@context": "https://schema.org/",
-                    "@type": "LocalBusiness",
-                    "name": document.getElementById('nome').innerText,
-                    "aggregateRating": { "@type": "AggregateRating", "ratingValue": media.toFixed(1), "reviewCount": conteggio }
-                });
+        // Funzione SEO migliorata: prende il JSON completo e aggiunge il rating
+        function aggiornaSchemaSEO(schemaString, media, conteggio) {
+            const script = document.getElementById('json-ld-schema');
+            if (script && schemaString) {
+                try {
+                    let schemaObj = JSON.parse(schemaString);
+                    schemaObj.aggregateRating = {
+                        "@type": "AggregateRating",
+                        "ratingValue": Math.min(media, 5.0).toFixed(1),
+                        "reviewCount": conteggio
+                    };
+                    script.textContent = JSON.stringify(schemaObj);
+                } catch(e) { console.error("Errore schema:", e); }
             }
         }
 
-        // --- TUTTA LA LOGICA ORIGINALE INVARIATA ---
         window.vota = async (voto) => {
             await updateDoc(doc(db, "negozi", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) });
             toggleCart();
@@ -109,8 +111,8 @@
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "negozi", idNegozio));
             if (docSnap.exists()) {
-                let dati = await controllaReset(docSnap.data());
-                window.d = dati;
+                let d = await controllaReset(docSnap.data());
+                window.d = d;
                 document.getElementById('nome').innerText = d.nome || "Negozio";
                 document.getElementById('descrizione').innerText = d.descrizione || "";
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
@@ -123,8 +125,8 @@
                 document.getElementById('totale-voti').innerText = conteggio;
                 document.getElementById('totale-punti').innerText = somma;
                 
-                // Aggiorna SEO senza intaccare il DOM della pagina
-                aggiornaSchemaSEO(media, conteggio);
+                // Iniezione del JSON completo da Firebase + Rating
+                aggiornaSchemaSEO(d.schema, media, conteggio);
 
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
@@ -142,14 +144,15 @@
                     });
                 }
                 document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
-                aggiornaStatoUI(window.d);
+                aggiornaStatoUI(d);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        async function controllaReset(dati) { /* ... invariato ... */ const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
-        function aggiornaStatoUI(dati) { /* ... invariato ... */ const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
+        // Funzioni di supporto invariate
+        async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "negozi", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
+        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
         window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
         window.incrementaClick = async () => { await updateDoc(doc(db, "negozi", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "negozi", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
         window.toggleCart = () => { const p = document.getElementById('cart-panel'); p.style.display = (p.style.display === 'block') ? 'none' : 'block'; };
