@@ -72,9 +72,9 @@
                 const d = docSnap.data();
                 
                 // Aggiorna Interfaccia
-                document.getElementById('nome').innerText = d.nome;
-                document.getElementById('descrizione').innerText = d.descrizione;
-                document.getElementById('indirizzo').innerText = d.indirizzo;
+                document.getElementById('nome').innerText = d.nome || "Negozio";
+                document.getElementById('descrizione').innerText = d.descrizione || "";
+                document.getElementById('indirizzo').innerText = d.indirizzo || "";
                 if(d.logo) document.getElementById('logo-box').style.backgroundImage = `url('${d.logo}')`;
                 if(d.copertina) document.getElementById('cover').style.backgroundImage = `url('${d.copertina}')`;
                 if(d.mappa) {
@@ -82,23 +82,29 @@
                     document.getElementById('iframe-mappa').src = d.mappa;
                 }
 
-                // Aggiorna JSON-LD per Google
+                // Aggiorna JSON-LD per Google (Ottimizzato 100% SEO)
                 const seo = document.getElementById('seo-data');
                 seo.innerText = JSON.stringify({
                     "@context": "https://schema.org",
-                    "@type": "LocalBusiness",
-                    "name": d.nome,
-                    "address": d.indirizzo,
-                    "description": d.descrizione
+                    "@type": "Restaurant",
+                    "name": d.nome || "Negozio",
+                    "image": d.copertina || "",
+                    "priceRange": "€€",
+                    "telephone": d.telefono || "",
+                    "description": d.descrizione || "",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "streetAddress": d.indirizzo || ""
+                    }
                 });
 
-                window.d = d; // Salva per altre funzioni
+                window.d = d; 
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
 
-        // CORREZIONE CRITICA: Aggiunto il simbolo $ per la variabile
+        // CORREZIONE: Aggiunto il $ per la variabile
         window.apriNavigazione = () => {
             const indirizzo = encodeURIComponent(window.d.indirizzo);
             window.open(`https://www.google.com/maps/search/?api=1&query=${indirizzo}`, '_blank');
