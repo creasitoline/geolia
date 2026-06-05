@@ -99,6 +99,22 @@
                 document.getElementById('indirizzo').innerText = d.indirizzo || "";
                 document.getElementById('orari').innerText = d.orari ? d.orari.replace(',', ' | ') : "";
                 
+                // LOGICA STATO: Aperto/Chiuso basata su orari database
+                const now = new Date();
+                const cur = now.getHours() * 100 + now.getMinutes();
+                let ap = false;
+                if(d.orari) {
+                    d.orari.split(',').forEach(f => {
+                        const parti = f.split('-');
+                        if(parti.length === 2) {
+                            const s = parseInt(parti[0].replace(':', ''));
+                            const e = parseInt(parti[1].replace(':', ''));
+                            if (cur >= s && cur < e) ap = true;
+                        }
+                    });
+                }
+                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745; font-weight:bold;">● Aperto</span>' : '<span style="color:#dc3545; font-weight:bold;">● Chiuso</span>';
+                
                 const somma = d.votiSomma || 0;
                 const conteggio = d.votiConteggio || 0;
                 const media = conteggio > 0 ? (somma / conteggio) : 0;
