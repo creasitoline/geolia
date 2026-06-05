@@ -146,4 +146,9 @@
             window.toggleCart(); window.tornaIndietro(); 
         };
         window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
-        window.contattaAdmin = () => { window.open(`
+        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
+
+        caricaDati();
+    </script>
+</body>
+</html>
