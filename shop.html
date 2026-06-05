@@ -17,35 +17,17 @@
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
-        .user-input.error { border: 2px solid #dc3545; }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
         .hidden { display: none; }
         #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
-        /* Slider Vetrina: Scorrimento fluido e mantenimento proporzioni */
-        #vetrina-container { margin-top: 25px; margin-bottom: 25px; }
-        #slider-vetrina { 
-            display: flex; 
-            overflow-x: auto; 
-            gap: 15px; 
-            padding: 10px 0; 
-            cursor: grab; 
-            user-select: none; 
-            scroll-behavior: smooth; 
-            -webkit-overflow-scrolling: touch; 
-            align-items: center;
-        }
-        #slider-vetrina::-webkit-scrollbar { height: 8px; }
-        #slider-vetrina::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        #slider-vetrina img { 
-            max-height: 250px; 
-            width: auto; 
-            object-fit: contain; /* Mantiene proporzioni originali */
-            background: #fcfcfc; 
-            border: 1px solid #eee; 
-            border-radius: 12px; 
-            flex-shrink: 0; 
-        }
+
+        /* Stili Slider */
+        .slider-wrapper { position: relative; width: 100%; margin: 20px 0; overflow: hidden; }
+        .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 10px; padding: 10px 0; -ms-overflow-style: none; scrollbar-width: none; }
+        .slider-container::-webkit-scrollbar { display: none; }
+        .slider-container img { height: 250px; width: auto; object-fit: contain; border-radius: 12px; border: 1px solid #eee; background: #fff; }
+        .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 15px 10px; cursor: pointer; border-radius: 5px; z-index: 10; font-size: 20px; }
+        .prev { left: 0; } .next { right: 0; }
     </style>
 </head>
 <body>
@@ -64,17 +46,17 @@
                 <p><strong>🕒 Orari:</strong> <span id="orari"></span></p>
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
                 <p><strong>Recensioni:</strong> <span id="media-stelle">0</span>/5 ⭐ (<span id="totale-voti">0</span> voti)</p>
-                <p><strong>Totale punti:</strong> <span id="totale-punti">0</span></p>
                 <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
+            </div>
+
+            <div id="vetrina-section" class="slider-wrapper hidden">
+                <button class="nav-btn prev" onclick="scrollSlider(-300)">❮</button>
+                <div id="slider-container" class="slider-container"></div>
+                <button class="nav-btn next" onclick="scrollSlider(300)">❯</button>
             </div>
             
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
             <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
-            
-            <div id="vetrina-container" class="hidden">
-                <h3 style="margin-top:20px;">Vetrina</h3>
-                <div id="slider-vetrina"></div>
-            </div>
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
@@ -83,8 +65,44 @@
         </div>
     </div>
 
+    <div id="cart-panel"></div>
+
     <script type="module">
-        /* ... (Inserisci qui il resto del tuo script JS originale) ... */
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIGURAZIONE
+        const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
+        const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
+        window.d = {};
+
+        // LOGICA SLIDER
+        window.scrollSlider = (val) => {
+            document.getElementById('slider-container').scrollBy({ left: val, behavior: 'smooth' });
+        };
+
+        async function caricaDati() {
+            const docSnap = await getDoc(doc(db, "shop", idNegozio));
+            if (docSnap.exists()) {
+                const dati = docSnap.data();
+                window.d = dati;
+                
+                // Popola slider se esiste l'array 'vetrina' nel database
+                if (dati.vetrina && Array.isArray(dati.vetrina) && dati.vetrina.length > 0) {
+                    const container = document.getElementById('slider-container');
+                    container.innerHTML = dati.vetrina.map(imgUrl => `<img src="${imgUrl}">`).join('');
+                    document.getElementById('vetrina-section').classList.remove('hidden');
+                }
+
+                // ... Il resto della tua logica di caricamento originale ...
+                document.getElementById('nome').innerText = dati.nome || "Negozio";
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-content').style.opacity = '1';
+            }
+        }
+
+        // Mantieni tutte le tue funzioni originali sotto (vota, toggleCart, ecc.)
+        caricaDati();
     </script>
 </body>
 </html>
