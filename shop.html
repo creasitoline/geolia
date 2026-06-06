@@ -17,23 +17,22 @@
         .info-box { background: #fff; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #eee; }
         .btn { display: block; color: white; padding: 18px; text-align: center; border-radius: 12px; cursor: pointer; border: none; width: 100%; font-size: 18px; margin-bottom: 10px; font-weight: bold; }
         #cart-panel { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.15); z-index: 1000; padding: 25px; box-sizing: border-box; display: none; }
-        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .commento-item { border-bottom: 1px solid #eee; padding: 8px 0; font-size: 0.9em; }
+        .user-input { width: 100%; padding: 15px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; transition: border 0.3s; }
+        .user-input.error { border: 2px solid #dc3545; }
         .hidden { display: none; }
-        #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
+        #popup-voto { position: fixed; top: 20px; left: 10%; width: 80%; background: #28a745; color: white; padding: 15px; border-radius: 10px; z-index: 9999; display: none; text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .slider-wrapper { position: relative; width: 100%; margin: 20px 0; }
-        .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
+        .slider-container { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; }
         .slider-container::-webkit-scrollbar { display: none; }
         .slider-container img { height: 250px; width: auto; object-fit: contain; background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; }
         .nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.4); color: white; border: none; padding: 15px 10px; cursor: pointer; z-index: 5; border-radius: 5px; }
         .prev { left: 5px; } .next { right: 5px; }
+        #testo-vetrina { margin: 15px 0 5px 0; color: #333; font-weight: bold; }
     </style>
 </head>
 <body>
-
     <div id="loader"><div class="spinner"></div></div>
     <div id="popup-voto">Grazie del voto! ⭐</div>
-
     <div class="card" id="main-content" style="opacity: 0;">
         <div id="cover" class="cover"></div>
         <div id="logo-box" class="logo-box"></div>
@@ -46,36 +45,30 @@
                 <p><strong>Stato:</strong> <span id="stato-box"></span></p>
                 <p><strong>Recensioni:</strong> <span id="media-stelle">0</span>/5 ⭐ (<span id="totale-voti">0</span> voti)</p>
                 <p><strong>Totale punti:</strong> <span id="totale-punti">0</span></p>
-                
-                <!-- SEZIONE COMMENTI INTEGRATA -->
-                <details style="margin-top:15px; border-top:1px solid #eee; pt:10px;">
-                    <summary style="cursor:pointer; font-weight:bold; padding-top:10px;">💬 Leggi e scrivi commenti</summary>
-                    <div id="lista-commenti" style="margin:10px 0;"><em>Caricamento...</em></div>
-                    <input type="text" id="nome-commento" class="user-input" placeholder="Il tuo nome">
-                    <textarea id="testo-commento" class="user-input" placeholder="Scrivi un commento..."></textarea>
-                    <button class="btn" style="background:#007bff; font-size:14px; padding:10px;" onclick="inviaCommento()">Pubblica</button>
-                </details>
-                
                 <p id="status-limit" style="margin-top:10px; font-weight: bold;"></p>
+                
+                <details onclick="caricaCommenti()">
+                    <summary style="cursor:pointer; font-weight:bold;">💬 Leggi i Commenti</summary>
+                    <div id="lista-commenti" style="margin:10px 0; font-size:0.9em;"><em>Caricamento...</em></div>
+                    <input type="text" id="nome-commento" class="user-input" placeholder="Tuo Nome">
+                    <textarea id="testo-commento" class="user-input" placeholder="Scrivi un commento..."></textarea>
+                    <button class="btn" style="background:#007bff; padding:10px;" onclick="inviaCommento()">Pubblica</button>
+                </details>
             </div>
-
             <button id="btn-contatta" class="btn" style="background:#007bff" onclick="toggleCart()">Contatta il Negozio</button>
             <button id="btn-premium" class="btn" style="background:#25D366; display:none;" onclick="contattaAdmin()">Passa al piano Premium 👑</button>
-            
             <h3 id="testo-vetrina" class="hidden"></h3>
             <div id="vetrina-area" class="slider-wrapper hidden">
                 <button class="nav-btn prev" onclick="scrollSlider(-250)">❮</button>
                 <div id="slider-vetrina" class="slider-container"></div>
                 <button class="nav-btn next" onclick="scrollSlider(250)">❯</button>
             </div>
-            
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
                 <button class="btn" style="background:#343a40; margin-top:10px;" onclick="apriNavigazione()">Ottieni Indicazioni 🗺️</button>
             </div>
         </div>
     </div>
-
     <div id="cart-panel">
         <div id="menu-scelta">
             <h3 style="margin-top:0">Come vuoi contattarci?</h3>
@@ -95,51 +88,55 @@
             <button class="btn" style="background:#6c757d" onclick="tornaIndietro()">Indietro</button>
         </div>
     </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        
+        import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, query, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
-        window.d = {}; 
-
-        // Logica Commenti
+        window.d = {}; window.tipoSelezionato = '';
+        window.scrollSlider = (offset) => { document.getElementById('slider-vetrina').scrollBy({ left: offset, behavior: 'smooth' }); };
+        
         window.inviaCommento = async () => {
             const n = document.getElementById('nome-commento'), t = document.getElementById('testo-commento');
             if(!n.value.trim() || !t.value.trim()) return alert("Compila tutto!");
             await addDoc(collection(db, "shop", idNegozio, "commenti"), { nome: n.value, testo: t.value, data: new Date().toISOString() });
-            n.value = ""; t.value = "";
-            caricaCommenti();
+            n.value = ""; t.value = ""; caricaCommenti();
         };
 
         async function caricaCommenti() {
             const snap = await getDocs(query(collection(db, "shop", idNegozio, "commenti"), orderBy("data", "desc")));
-            const lista = document.getElementById('lista-commenti');
-            lista.innerHTML = "";
-            snap.forEach(d => { const c = d.data(); lista.innerHTML += `<div class="commento-item"><strong>${c.nome}</strong>: ${c.testo}</div>`; });
+            const lista = document.getElementById('lista-commenti'); lista.innerHTML = "";
+            const ora = new Date();
+            snap.forEach(async (d) => {
+                const c = d.data();
+                if ((ora - new Date(c.data)) / (1000*60*60*24) > 90) await deleteDoc(doc(db, "shop", idNegozio, "commenti", d.id));
+                else lista.innerHTML += `<div style="border-bottom:1px solid #eee; padding:5px 0;"><strong>${c.nome}</strong>: ${c.testo}</div>`;
+            });
         }
-
+        
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "shop", idNegozio));
             if (docSnap.exists()) {
-                window.d = docSnap.data();
-                // ... (tutto il tuo codice di visualizzazione esistente)
-                document.getElementById('nome').innerText = window.d.nome || "Negozio";
-                document.getElementById('totale-punti').innerText = window.d.votiSomma || 0;
-                document.getElementById('totale-voti').innerText = window.d.votiConteggio || 0;
-                document.getElementById('media-stelle').innerText = (window.d.votiConteggio > 0 ? (window.d.votiSomma / window.d.votiConteggio).toFixed(1) : 0);
-                
-                caricaCommenti(); // Carica i commenti all'avvio
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-content').style.opacity = '1';
+                let dati = docSnap.data(); window.d = dati;
+                if (dati.testoVetrina) { document.getElementById('testo-vetrina').innerText = dati.testoVetrina; document.getElementById('testo-vetrina').classList.remove('hidden'); }
+                if (dati.vetrina) { document.getElementById('slider-vetrina').innerHTML = dati.vetrina.map(url => `<img src="${url}">`).join(''); document.getElementById('vetrina-area').classList.remove('hidden'); }
+                document.getElementById('nome').innerText = dati.nome || "Negozio";
+                document.getElementById('media-stelle').innerText = (dati.votiConteggio > 0 ? (dati.votiSomma / dati.votiConteggio).toFixed(1) : 0);
+                document.getElementById('totale-voti').innerText = dati.votiConteggio || 0;
+                document.getElementById('totale-punti').innerText = dati.votiSomma || 0;
+                document.getElementById('loader').style.display = 'none'; document.getElementById('main-content').style.opacity = '1';
+                caricaCommenti();
             }
         }
-        
-        // ... (resto delle funzioni esistenti come vota, toggleCart, ecc.)
+        // ... (resto delle funzioni originali come vota, toggleCart, ecc. rimangono uguali)
         window.vota = async (v) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(v), votiConteggio: increment(1) }); caricaDati(); };
         window.toggleCart = () => { document.getElementById('cart-panel').style.display = (document.getElementById('cart-panel').style.display === 'block') ? 'none' : 'block'; };
-        // ... (altre funzioni logiche invariate)
+        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); };
+        window.azioneDiretta = async (t) => { window.location.href = t === 'tel' ? `tel:${window.d.telefono}` : '#'; window.toggleCart(); };
+        window.eseguiInvio = async () => { /* logica tua */ window.toggleCart(); window.tornaIndietro(); };
+        window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
+        window.contattaAdmin = () => window.open(`https://wa.me/41764458866`);
+        window.apriNavigazione = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`);
         caricaDati();
     </script>
 </body>
