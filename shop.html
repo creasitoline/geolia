@@ -61,6 +61,18 @@
                 <div id="slider-vetrina" class="slider-container"></div>
                 <button class="nav-btn next" onclick="scrollSlider(250)">❯</button>
             </div>
+
+            <div class="info-box">
+                <details id="area-commenti" onclick="if(!window.commentiCaricati) { caricaCommenti(); window.commentiCaricati = true; }">
+                    <summary style="cursor:pointer; padding:5px;"><strong>💬 Recensioni Clienti</strong></summary>
+                    <div id="lista-commenti" style="margin-top:15px; font-size: 0.9em;"><em>Caricamento...</em></div>
+                    <div style="margin-top:20px; border-top: 1px solid #eee; pt: 10px;">
+                        <input type="text" id="nome-commento" class="user-input" placeholder="Il tuo nome">
+                        <textarea id="testo-commento" class="user-input" placeholder="Scrivi un commento..."></textarea>
+                        <button class="btn" style="background:#007bff; padding: 12px;" onclick="inviaCommento()">Pubblica Commento</button>
+                    </div>
+                </details>
+            </div>
             
             <div id="mappa-container" style="margin-top:20px; display:none;">
                 <iframe id="iframe-mappa" width="100%" height="250" frameborder="0" style="border-radius:12px;" allowfullscreen="true" loading="lazy"></iframe>
@@ -91,61 +103,73 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, collection, addDoc, query, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
         const db = getFirestore(initializeApp({ apiKey: "AIzaSyAS5tUlgKnQA7xlEU7lNZd6hifqz6Zskzo", authDomain: "geolia-b5b99.firebaseapp.com", projectId: "geolia-b5b99", storageBucket: "geolia-b5b99.firebasestorage.app", messagingSenderId: "760719863827", appId: "1:760719863827:web:9f0c1419d81208cee20fe6" }));
         const idNegozio = new URLSearchParams(window.location.search).get('id') || "ch-ti-paradiso-pizza-amore-00001";
-        window.d = {}; window.tipoSelezionato = '';
+        
+        window.d = {}; window.tipoSelezionato = ''; window.commentiCaricati = false;
+        
+        // Logica Commenti
+        window.inviaCommento = async () => {
+            const n = document.getElementById('nome-commento'), t = document.getElementById('testo-commento');
+            if(!n.value.trim() || !t.value.trim()) return alert("Compila entrambi i campi!");
+            await addDoc(collection(db, "shop", idNegozio, "commenti"), { nome: n.value, testo: t.value, data: new Date().toISOString() });
+            n.value = ""; t.value = "";
+            caricaCommenti();
+        };
+
+        async function caricaCommenti() {
+            const lista = document.getElementById('lista-commenti');
+            const q = query(collection(db, "shop", idNegozio, "commenti"), orderBy("data", "desc"));
+            const snap = await getDocs(q);
+            lista.innerHTML = "";
+            const ora = new Date();
+            snap.forEach(async (d) => {
+                const c = d.data();
+                if ((ora - new Date(c.data)) / (1000*60*60*24) > 90) await deleteDoc(doc(db, "shop", idNegozio, "commenti", d.id));
+                else lista.innerHTML += `<p><strong>${c.nome}</strong>: ${c.testo}</p>`;
+            });
+        }
+
         window.scrollSlider = (offset) => { document.getElementById('slider-vetrina').scrollBy({ left: offset, behavior: 'smooth' }); };
-        function applicaSchemaDaDatabase(schemaString) { const script = document.getElementById('json-ld-schema'); if (script && schemaString) { script.textContent = schemaString; } }
-        async function controllaReset(dati) { const now = new Date(); const dataReset = dati.prossimoReset ? new Date(dati.prossimoReset) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); if (now >= dataReset) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "shop", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; dati.prossimoReset = nuovaData.toISOString(); } return dati; }
-        function aggiornaStatoUI(dati) { const dataF = new Date(dati.prossimoReset).toLocaleDateString('it-IT'); if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; document.getElementById('status-limit').innerHTML = `Limite piano free di ${dati.limite} raggiunto! Reset al ${dataF}.`; } else { document.getElementById('status-limit').innerText = `Accessi: ${dati.count || 0} / ${dati.limite || 0} (Reset: ${dataF})`; } }
+        function applicaSchemaDaDatabase(schemaString) { const script = document.getElementById('json-ld-schema'); if (script && schemaString) script.textContent = schemaString; }
+        async function controllaReset(dati) { const now = new Date(); if (dati.prossimoReset && now >= new Date(dati.prossimoReset)) { const nuovaData = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); await updateDoc(doc(db, "shop", idNegozio), { count: 0, prossimoReset: nuovaData.toISOString() }); dati.count = 0; } return dati; }
+        function aggiornaStatoUI(dati) { if (dati.limite > 0 && dati.count >= dati.limite) { document.getElementById('btn-contatta').style.display = "none"; document.getElementById('btn-premium').style.display = "block"; } }
+        
         async function caricaDati() {
             const docSnap = await getDoc(doc(db, "shop", idNegozio));
             if (docSnap.exists()) {
-                let dati = await controllaReset(docSnap.data());
-                window.d = dati;
-                
-                // Gestione Titolo Vetrina
-                if (dati.testoVetrina && dati.testoVetrina.trim() !== "") {
-                    const tv = document.getElementById('testo-vetrina');
-                    tv.innerText = dati.testoVetrina;
-                    tv.classList.remove('hidden');
-                }
-
-                if (dati.vetrina && Array.isArray(dati.vetrina)) {
-                    const cont = document.getElementById('slider-vetrina');
-                    cont.innerHTML = dati.vetrina.map(url => `<img src="${url}">`).join('');
-                    document.getElementById('vetrina-area').classList.remove('hidden');
-                }
+                let dati = await controllaReset(docSnap.data()); window.d = dati;
+                if (dati.testoVetrina) { document.getElementById('testo-vetrina').innerText = dati.testoVetrina; document.getElementById('testo-vetrina').classList.remove('hidden'); }
+                if (dati.vetrina) { document.getElementById('slider-vetrina').innerHTML = dati.vetrina.map(url => `<img src="${url}">`).join(''); document.getElementById('vetrina-area').classList.remove('hidden'); }
                 applicaSchemaDaDatabase(dati.schema);
                 document.getElementById('nome').innerText = dati.nome || "Negozio";
                 document.getElementById('descrizione').innerText = dati.descrizione || "";
                 document.getElementById('indirizzo').innerText = dati.indirizzo || "";
                 document.getElementById('orari').innerText = dati.orari ? dati.orari.replace(',', ' | ') : "";
-                const somma = dati.votiSomma || 0; const conteggio = dati.votiConteggio || 0;
-                document.getElementById('media-stelle').innerText = (conteggio > 0 ? (somma / conteggio) : 0).toFixed(1);
-                document.getElementById('totale-voti').innerText = conteggio;
-                document.getElementById('totale-punti').innerText = somma;
+                document.getElementById('media-stelle').innerText = (dati.votiConteggio > 0 ? (dati.votiSomma / dati.votiConteggio).toFixed(1) : 0);
+                document.getElementById('totale-voti').innerText = dati.votiConteggio || 0;
+                document.getElementById('totale-punti').innerText = dati.votiSomma || 0;
                 if(dati.logo) document.getElementById('logo-box').style.backgroundImage = `url('${dati.logo}')`;
                 if(dati.copertina) document.getElementById('cover').style.backgroundImage = `url('${dati.copertina}')`;
                 if(dati.mappa) { document.getElementById('mappa-container').style.display = "block"; document.getElementById('iframe-mappa').src = dati.mappa; }
-                const now = new Date(); const cur = now.getHours() * 100 + now.getMinutes();
-                let ap = false; if(dati.orari) { dati.orari.split(',').forEach(f => { const [s, e] = f.split('-').map(t => parseInt(t.replace(':', ''))); if (cur >= s && cur < e) ap = true; }); }
-                document.getElementById('stato-box').innerHTML = ap ? '<span style="color:#28a745">● Aperto</span>' : '<span style="color:#dc3545">● Chiuso</span>';
                 aggiornaStatoUI(dati);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.opacity = '1';
             }
         }
-        window.vota = async (voto) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(voto), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => { p.style.display = 'none'; }, 2000); caricaDati(); };
-        window.apriNavigazione = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank'); };
-        window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); const s = await getDoc(doc(db, "shop", idNegozio)); window.d = s.data(); aggiornaStatoUI(window.d); };
-        window.toggleCart = () => { const p = document.getElementById('cart-panel'); if (p.style.display !== 'block') { document.getElementById('btn-wa-menu').style.display = (window.d.whatsapp && window.d.whatsapp.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-email-menu').style.display = (window.d.email && window.d.email.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-tel-menu').style.display = (window.d.telefono && window.d.telefono.trim() !== "") ? 'block' : 'none'; document.getElementById('btn-web-menu').style.display = (window.d.sitoWeb && window.d.sitoWeb.trim() !== "") ? 'block' : 'none'; p.style.display = 'block'; } else { p.style.display = 'none'; } };
-        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); document.getElementById('titolo-modulo').innerText = (t === 'wa') ? 'Invia su WhatsApp' : 'Invia Email'; };
-        window.azioneDiretta = async (t) => { await incrementaClick(); if (t === 'tel') { window.location.href = `tel:${window.d.telefono || ''}`; } else if (t === 'web') { if (window.d.sitoWeb) window.open(window.d.sitoWeb, '_blank'); else alert("Sito web non configurato"); } window.toggleCart(); };
-        window.eseguiInvio = async () => { const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente'); if(!n.value.trim() || !t.value.trim() || !m.value.trim()) { [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); return; } await incrementaClick(); const tk = `*Richiesta da GeoLiA*\nNome: ${n.value}\nTelefono: ${t.value}\nMessaggio: ${m.value}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp || ''}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta da ${n.value}&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
+        
+        window.vota = async (v) => { await updateDoc(doc(db, "shop", idNegozio), { votiSomma: increment(v), votiConteggio: increment(1) }); toggleCart(); const p = document.getElementById('popup-voto'); p.style.display = 'block'; setTimeout(() => p.style.display = 'none', 2000); caricaDati(); };
+        window.apriNavigazione = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(window.d.indirizzo)}`, '_blank');
+        window.incrementaClick = async () => { await updateDoc(doc(db, "shop", idNegozio), { count: increment(1) }); window.d = (await getDoc(doc(db, "shop", idNegozio))).data(); };
+        window.toggleCart = () => { const p = document.getElementById('cart-panel'); if (p.style.display !== 'block') { ['wa','email','tel','web'].forEach(t => document.getElementById('btn-'+t+'-menu').style.display = (window.d[t === 'wa' ? 'whatsapp' : t === 'email' ? 'email' : t === 'tel' ? 'telefono' : 'sitoWeb'] ? 'block' : 'none')); p.style.display = 'block'; } else p.style.display = 'none'; };
+        window.registraEApri = (t) => { window.tipoSelezionato = t; document.getElementById('menu-scelta').classList.add('hidden'); document.getElementById('modulo-invio').classList.remove('hidden'); };
+        window.azioneDiretta = async (t) => { await incrementaClick(); if (t === 'tel') window.location.href = `tel:${window.d.telefono}`; else if (t === 'web') window.open(window.d.sitoWeb, '_blank'); window.toggleCart(); };
+        window.eseguiInvio = async () => { const n = document.getElementById('nome-utente'), t = document.getElementById('tel-utente'), m = document.getElementById('msg-utente'); if(!n.value.trim() || !t.value.trim() || !m.value.trim()) return [n,t,m].forEach(e => !e.value.trim() ? e.classList.add('error') : null); await incrementaClick(); const tk = `Richiesta: ${m.value}\nDa: ${n.value}, Tel: ${t.value}`; if (window.tipoSelezionato === 'wa') window.open(`https://wa.me/${window.d.whatsapp}?text=${encodeURIComponent(tk)}`); else window.location.href = `mailto:${window.d.email}?subject=Richiesta&body=${encodeURIComponent(tk)}`; window.toggleCart(); window.tornaIndietro(); };
         window.tornaIndietro = () => { document.getElementById('menu-scelta').classList.remove('hidden'); document.getElementById('modulo-invio').classList.add('hidden'); };
-        window.contattaAdmin = () => { window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Vorrei passare al piano Premium per: ' + idNegozio)}`); };
+        window.contattaAdmin = () => window.open(`https://wa.me/41764458866?text=${encodeURIComponent('Piano Premium: ' + idNegozio)}`);
+        
         caricaDati();
     </script>
 </body>
